@@ -44,38 +44,48 @@ def load_file_sarcasm(filename):
     df.dropna(subset=['comment'], inplace=True) #remove NaNs
     print "*** removed empty comments ***"
     print "new shape:", df['comment'].shape
+    return df
+
+def get_data_target_from_df(df):
     df_data = df.drop(['label'], axis=1)
     df_target = df.drop(['comment'], axis=1)
-    return df_data, df_target, df
+    return df_data, df_target
 
-def preprocess_text(df):
+def preprocess_text(df, new_filename):
     stopwords = nltk.corpus.stopwords.words('english')
     stopwords.extend(["theres", "would", "could", "ive", "theyre", "dont", "since"])
-    stemmer = PorterStemmer()
     df['clean_comments'] = df['comment'].apply(lambda x:''.join([\
     re.sub('[^a-z\s]', '', i.lower()) for i in x if i not in string.punctuation]))
     df['clean_comments'] = df['clean_comments'].apply(nltk.word_tokenize)
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
-    print "comments1",df['clean_comments'].head()
-    print "shape:", df['clean_comments'].shape
     df['clean_comments']= df['clean_comments'].apply(lambda x: [item for item in x\
                                                           if item not in stopwords])
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
     print "\ncomments without stopwords",df['clean_comments'].head()
     print "shape:", df['clean_comments'].shape
-    df['stemmed_token_comments'] = df['clean_comments'].apply(lambda x: \
-                                                      [stemmer.stem(item) for item in x])
-    print "comments",df['stemmed_token_comments'].head()
-    df.to_csv(root_sarcasm + "train_cleaned.csv")
+#    stemmer = PorterStemmer()
+#    df['stemmed_token_comments'] = df['clean_comments'].apply(lambda x: \
+#                                                      [stemmer.stem(item) for item in x])
+#    print "comments",df['stemmed_token_comments'].head()
+    df.to_csv(root_sarcasm + new_filename)
     return df
 
+def prepare_data():
+    df_train = load_file_sarcasm(train_file)
+    df_validate = load_file_sarcasm(validate_file)
+    df_test = load_file_sarcasm(test_file)
+    preprocessed_df_train = preprocess_text(df_train,"train_cleaned.csv") 
+    preprocessed_df_validate = preprocess_text(df_validate, "validate_cleaned.csv") 
+    preprocessed_df_validate = preprocess_text(df_test, "test_cleaned.csv") 
+    train_data, train_targets = get_data_target_from_df(preprocessed_df_train)
+    validate_data, validate_targets = get_data_target_from_df(preprocessed_df_validate)
+    return train_data, train_targets, validate_data, validate_targets
+    
 def main():
     #load_data_and_split(root_sarcasm) --> RUN this once, then load the new files
-    train_df, train_target, df_train = load_file_sarcasm(train_file)
-    validate_df, validate_target, df_validate = load_file_sarcasm(validate_file)
-    preprocessed_df_train = preprocess_text(df_train)
+    train_data, train_targets, validate_data, validate_targets = prepare_data() # RUN this once and then use the new files generated
     
 if __name__ == '__main__':
     main()
