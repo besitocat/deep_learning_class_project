@@ -14,7 +14,7 @@ import string
 from nltk.stem import PorterStemmer
 import re
 from sklearn.feature_extraction.text import TfidfVectorizer
-
+from ast import literal_eval
 
 root_sarcasm = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv) 
                                         #in a parent folder named "sarcasm_data"
@@ -57,7 +57,7 @@ def load_file_sarcasm(filename):
 def load_preprocessed_file(filename):
     print "\n**** LOADING PREPROCESSED FILE: " + filename + " ..."
     column_names = ['label','clean_comments']
-    df = pd.read_csv(root_sarcasm + filename, usecols = column_names)
+    df = pd.read_csv(root_sarcasm + filename, usecols = column_names, converters={"clean_comments": literal_eval})
     df_data = df.drop(['label'], axis=1)
     df_target = df.drop(['clean_comments'], axis=1)
     return df_data, df_target
@@ -97,22 +97,34 @@ def prepare_data():
     print "**** PREPROCESSING COMPLETED for all files"
 
 def transform_to_tfidf(df, column_name, filename):
-    print "\n**** Transforming to TF-IDF values...."
+    print "\n**** Transforming to TF-IDF values.... to file: ", filename
     v = TfidfVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x, use_idf=False)
     df_new = v.fit_transform(df[column_name])
+    print "vocabulary size:", len(v.get_feature_names())
     df['tf-idf-transform'] = list(df_new)
     df.to_csv(root_sarcasm + filename)
-    print "**** Transforming to TF-IDF is COMPLETE. New column: " + column_name + \
-                                                        " added to file: " + filename
+    print "**** Transforming to TF-IDF is COMPLETE. New column - tf-idf-transform added to file: " + filename
     return df_new
+
+def load_transformed_to_tfidf(filename):
+    print "\n**** LOADING TF-IDF TRANSFORMED FILE: " + filename + " ..."
+    column_names = ['tf-idf-transform']
+    df = pd.read_csv(root_sarcasm + filename, usecols = column_names)
+    return df
     
 def main():
-    prepare_data() # RUN this once and then use the new files generated
+    #prepare_data() # RUN this once and then use the new files generated
     df_train_data, df_train_targets = load_preprocessed_file(train_file_cleaned)
     df_validate_data, df_validate_targets = load_preprocessed_file(validate_file_cleaned)
-    transform_to_tfidf(df_validate_data, "clean_comments", 'validate_with_tfidf.csv')
-#    X_val = df_validate_data.tolist()
-#    Y_val = df_validate_targets.tolist()
+#    transform_to_tfidf(df_validate_data, "clean_comments", 'validate_with_tfidf.csv')
+#    transform_to_tfidf(df_train_data, "clean_comments", 'train_with_tfidf.csv')
+    X_val = load_transformed_to_tfidf("validate_with_tfidf.csv")
+    y_val = df_validate_targets['label']
+    X_train =load_transformed_to_tfidf("train_with_tfidf.csv")
+    y_train = df_train_targets['label']
+    print y_train.head
+    print X_train.head
+    
     
 if __name__ == '__main__':
     main()
