@@ -7,7 +7,6 @@ Created on Fri Feb 23 10:57:40 2018
 """
 
 import data_preprocess_transform as data_prep
-import keras
 from keras.models import Sequential
 from keras.layers import Dense
 from sklearn.metrics import confusion_matrix
@@ -16,7 +15,10 @@ from sklearn.cross_validation import cross_val_score
 from sklearn.naive_bayes import MultinomialNB
 
 def create_model(input_size):
-    print "\ncreating model...."
+    '''
+    Simple NN model. @Efi: do your magic here! 
+    '''
+    print "\nBuidling the model...."
     classifier = Sequential()
     # Adding the input layer and the first hidden layer
     classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu', input_dim = input_size))
@@ -26,59 +28,70 @@ def create_model(input_size):
     classifier.add(Dense(output_dim = 1, init = 'uniform', activation = 'sigmoid'))
     classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
     return classifier 
+
     
 def train_model(classifier, X_train, y_train, epochs):
-    print "\ntraining model...."
+    print "\nTraining the model...."
     classifier.fit(X_train, y_train, batch_size = 10, nb_epoch = epochs)
     return classifier
 
-
 def predict(classifier, X_val):
-    print "\npredicting...."
+    print "\nPredicting...."
     y_pred = classifier.predict(X_val)
     y_pred = (y_pred>0.5) #convert to binary output preedictions
     return y_pred
 
 def evaluate(y_true, y_pred):
+    print "\nEvaluating..."
     conf_matrix = confusion_matrix(y_true, y_pred)
     print "\nConfusion matrix:\n", conf_matrix
     target_names = ['class 0 (not sarcasm)', 'class 1 (sarcasm)']
     print(classification_report(y_true, y_pred, target_names=target_names))
     
 
-def pipeline():
-    X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm() #run this to get all the data ready
-    classifier = create_model()
-    trained_classifier = predict(classifier, X_train)
-    y_pred = predict(trained_classifier, X_val)
-    evaluate(y_val, y_pred)
-    
-def main():
-#    pipeline() #run this to train with real data and test on validation data
+def pipeline(train_with_real_data=True, epochs = 50):
     '''
-    simple NB model to test if data are correctly transformed: with validation file as train and a small file for testing
+    Pipeline for training and testing the NN model. Please provide train_with_real_data = False, 
+    if you want to test it with small files (validation file is used for training and a 
+    10 comment file is used for testing/validation)
     '''
-    classifier = MultinomialNB()
-    X_val, vec_model, y_val = data_prep.test_with_small_files()
-    input_size = X_val.shape[1]
-    print "Input size:", input_size
-    print "training classifier..."
-    classifier.fit(X_val, y_val)
-    print "getting test files"
-    df_small_data, df_small_targets = data_prep.load_preprocessed_file(data_prep.root_sarcasm_data_dir + "small_train.csv")
-    test_bow = vec_model.transform(df_small_data["clean_comments"])
-    print "predicting values"
-    print "test shape:", test_bow.shape
-    y_pred = predict(classifier, test_bow)
-    evaluate(df_small_targets, y_pred)
-    
-    
-    print "\n\ntesting for Keras"
+    if train_with_real_data:
+        X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm() # run this once to get all the data ready
+    #    X_train, y_train, X_val, y_val, X_test, y_test =  data_prep.load_all_files() # run this if you have already the preprocessed files
+    else:
+        X_train, vec_model, y_train = data_prep.test_with_small_files()
+        df_small_data, y_val = data_prep.load_preprocessed_file(data_prep.root_sarcasm_data_dir + "small_train.csv")
+        X_val = vec_model.transform(df_small_data["clean_comments"])
+    input_size = X_train.shape[1]
     nn_model = create_model(input_size)
-    nn_model = train_model(nn_model, X_val, y_val, 50)
-    y_pred_nn = predict(nn_model, test_bow)
-    evaluate(df_small_targets, y_pred_nn)
-    
+    nn_model = train_model(nn_model, X_val, y_val, epochs)
+    y_pred = predict(nn_model, X_val)
+    evaluate(y_val, y_pred)
+
+
+def naive_bayes_pipeline(train_with_real_data=True):
+    '''
+    a test function that the data are in correct format and can be used for 
+    training a simple NB model. Please provide train_with_real_data = False, 
+    if you want to test it with small files (validation file is used for training 
+    and a 10 comment file is used for testing/validation)
+    '''
+    if train_with_real_data:
+        X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm()
+    else:
+        X_train, vec_model, y_train = data_prep.test_with_small_files()
+        df_small_data, y_val = data_prep.load_preprocessed_file(data_prep.root_sarcasm_data_dir + "small_train.csv")
+        X_val = vec_model.transform(df_small_data["clean_comments"])
+    classifier = MultinomialNB()
+    classifier.fit(X_train, y_train)
+    print "predicting values"
+    print "test shape:", X_val.shape
+    y_pred = predict(classifier, X_val)
+    evaluate(y_val, y_pred)
+                   
+def main():
+#    naive_bayes_pipeline(train_with_real_data=False)   # a test with a simple NB model
+    pipeline(train_with_real_data=False, epochs=10)  #training with small files and testing with small file
     
 if __name__ == '__main__':
     main()

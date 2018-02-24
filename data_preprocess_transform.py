@@ -135,6 +135,10 @@ def pipeline_sarcasm():
     #if running for the first time: you must uncomment all the calls below!!
     df_train, df_validate, df_test = prepare_data() # RUN this once and then use the new files generated
     preprocess_data(df_train, df_validate, df_test)
+    X_train, y_train, X_val, y_val, X_test, y_test = load_all_files()
+    return X_train, y_train, X_val, y_val, X_test, y_test
+
+def load_all_files():
     df_train_data, df_train_targets = load_preprocessed_file(train_file_cleaned)
     df_validate_data, df_validate_targets = load_preprocessed_file(validate_file_cleaned)
     df_test_data, df_test_targets = load_preprocessed_file(test_file_cleaned)
@@ -142,9 +146,9 @@ def pipeline_sarcasm():
     X_train = bag_of_words
     X_val = vec_model.transform(df_validate_data["clean_comments"])
     X_test = vec_model.transform(df_test_data["clean_comments"])
-    y_val = df_validate_targets['label'].values()
-    y_train = df_train_targets['label'].values()
-    y_test = df_test_targets['label'].values()
+    y_val = df_validate_targets['label'].values
+    y_train = df_train_targets['label'].values
+    y_test = df_test_targets['label'].values
     return X_train, y_train, X_val, y_val, X_test, y_test
 
 def test_with_small_files():
