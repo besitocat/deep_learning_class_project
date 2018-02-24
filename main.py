@@ -49,18 +49,20 @@ def evaluate(y_true, y_pred):
     print(classification_report(y_true, y_pred, target_names=target_names))
     
 
-def pipeline(train_with_real_data=True, epochs = 50):
+def pipeline(is_first_run=False, train_with_real_data=True, epochs = 50, sample_test_file=None):
     '''
     Pipeline for training and testing the NN model. Please provide train_with_real_data = False, 
     if you want to test it with small files (validation file is used for training and a 
     10 comment file is used for testing/validation)
     '''
     if train_with_real_data:
-        X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm() # run this once to get all the data ready
-    #    X_train, y_train, X_val, y_val, X_test, y_test =  data_prep.load_all_files() # run this if you have already the preprocessed files
+        if is_first_run:
+            X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm() # run this once to get all the data ready
+        else:
+            X_train, y_train, X_val, y_val, X_test, y_test =  data_prep.load_all_files() # run this if you have already the preprocessed files
     else:
         X_train, vec_model, y_train = data_prep.test_with_small_files()
-        df_small_data, y_val = data_prep.load_preprocessed_file(data_prep.root_sarcasm_data_dir + "small_train.csv")
+        df_small_data, y_val = data_prep.load_preprocessed_file(sample_test_file)
         X_val = vec_model.transform(df_small_data["clean_comments"])
     input_size = X_train.shape[1]
     nn_model = create_model(input_size)
@@ -69,7 +71,7 @@ def pipeline(train_with_real_data=True, epochs = 50):
     evaluate(y_val, y_pred)
 
 
-def naive_bayes_pipeline(train_with_real_data=True):
+def naive_bayes_pipeline(train_with_real_data=True, sample_test_file=None):
     '''
     a test function that the data are in correct format and can be used for 
     training a simple NB model. Please provide train_with_real_data = False, 
@@ -80,7 +82,7 @@ def naive_bayes_pipeline(train_with_real_data=True):
         X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm()
     else:
         X_train, vec_model, y_train = data_prep.test_with_small_files()
-        df_small_data, y_val = data_prep.load_preprocessed_file(data_prep.root_sarcasm_data_dir + "small_train.csv")
+        df_small_data, y_val = data_prep.load_preprocessed_file(sample_test_file)
         X_val = vec_model.transform(df_small_data["clean_comments"])
     classifier = MultinomialNB()
     classifier.fit(X_train, y_train)
@@ -90,8 +92,12 @@ def naive_bayes_pipeline(train_with_real_data=True):
     evaluate(y_val, y_pred)
                    
 def main():
-#    naive_bayes_pipeline(train_with_real_data=False)   # a test with a simple NB model
-    pipeline(train_with_real_data=False, epochs=10)  #training with small files and testing with small file
+    
+    pipeline(is_first_run=False, train_with_real_data=False,
+             epochs=10, sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")  #training with small files and testing with small file
+    
+#    naive_bayes_pipeline(train_with_real_data=False, 
+#                         sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")   # a test with a simple NB model
     
 if __name__ == '__main__':
     main()
