@@ -1,6 +1,6 @@
-# deep_learning_class_project - Detecting Sarcasm with Neural Networks.
+#Document Classification Project - Detecting Sarcasm with Neural Networks.
 
-##Instructions for Running:
+*** Instructions for Running ***
 
 - Put the original "train-balanced-sarcasm.csv" file in a folder named "sarcasm_data" in the parent folder of this project.
 
