@@ -38,7 +38,7 @@ def load_data_and_split(root_sarcasm):
     df = pd.read_csv(root_sarcasm + sacrcasm_file)
     print "**** loading file.. :" + sacrcasm_file
     train, test = train_test_split(df, test_size=0.1, random_state=1)
-    train, validate = train_test_split(df, test_size=0.2, random_state=1)
+    train, validate = train_test_split(train, test_size=0.2, random_state=1)
     print "sizes:", "train:", len(train), ", validate:", len(validate), \
                                                         ", test:", len(test)
     train.to_csv(train_file, sep=',')
