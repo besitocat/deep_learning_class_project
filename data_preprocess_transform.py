@@ -16,8 +16,7 @@ import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from ast import literal_eval
-import pickle
-from sklearn.externals import joblib
+import cPickle
 
 root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv) 
                                         #in a parent folder named "sarcasm_data"
@@ -29,8 +28,6 @@ validate_file = root_sarcasm_data_dir + 'sarcasm_validate.csv'
 train_file_cleaned =  "train_cleaned.csv"
 validate_file_cleaned = "validate_cleaned.csv"
 test_file_cleaned = "test_cleaned.csv"
-
-vocabulary_size=10000 #select most frequent words
 
 def load_data_and_split(root_sarcasm):
     print "\n**** Splitting data into test, train and validate sets ****"
@@ -62,7 +59,8 @@ def load_file_sarcasm(filename):
 def load_preprocessed_file(filename):
     print "\n**** LOADING PREPROCESSED FILE: " + filename + " ..."
     column_names = ['label','clean_comments']
-    df = pd.read_csv(root_sarcasm_data_dir + filename, usecols = column_names, converters={"clean_comments": literal_eval})
+    df = pd.read_csv(root_sarcasm_data_dir + filename, usecols = column_names, 
+                                     converters={"clean_comments": literal_eval})
     df_data = df.drop(['label'], axis=1)
     df_target = df.drop(['clean_comments'], axis=1)
     print "total positive vs negative examples in dataset:\n", df_target['label'].value_counts()
@@ -106,45 +104,49 @@ def preprocess_data(df_train, df_validate, df_test):
     preprocess_text(df_test, test_file_cleaned) 
     print "**** PREPROCESSING COMPLETED for all files"
 
-def transform_to_vec_values(df, df_labels, column_name, filename):
+def transform_to_vec_values(df, df_labels, column_name, filename, vocabulary_size):
     print "\n**** Transforming to numerical values.... to file: ", filename
 #    vec_model = TfidfVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x, use_idf=False)
     vec_model = CountVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x,max_features=vocabulary_size)
     bag_of_words = vec_model.fit_transform(df[column_name])
+    #save to pickle file
+    cPickle.dump(bag_of_words, open(root_sarcasm_data_dir+"bag_of_words_values_"+
+                                   str(vocabulary_size)+".pkl", 'wb'))
     print "shape of transformation:", bag_of_words.shape
+    cPickle.dump(vec_model.vocabulary_, open(root_sarcasm_data_dir+"bow_vocab_"+
+                                   str(vocabulary_size)+".pkl", 'wb'))
     print "vocabulary size:", len(vec_model.get_feature_names())
     print "**** Transforming to TF-IDF ****"
-    #df_new = pd.DataFrame(bag_of_words.toarray(), columns=v.get_feature_names())
     labels = list(df_labels['label'])
     df.insert(loc=0, column='label', value=labels)
     df['tf-idf-transform'] = list(bag_of_words)
-    #df_final = pd.concat([df, df_new], axis=1)
     df.to_csv(root_sarcasm_data_dir + filename)
     print "**** Transforming to TF-IDF is COMPLETE. New column - tf-idf-transform added to file: "\
                                     + filename + " and the vectorized was saved into a pickle file"
     return bag_of_words, vec_model
 
-def load_transformed_to_tfidf(filename, model_filename):
-    print "\n**** LOADING TF-IDF TRANSFORMED FILE: " + filename + " ..."
-    #column_names = ['tf-idf-transform']
-    df = pd.read_csv(root_sarcasm_data_dir + filename)
-    df_data = df.drop(['label'], axis=1)
-    return df_data
 
-
-def pipeline_sarcasm():
+def pipeline_sarcasm(vocabulary_size, load_vocab_file):
     print "\n********** Preparing data for Sarcasm dataset ******************"
     #if running for the first time: you must uncomment all the calls below!!
     df_train, df_validate, df_test = prepare_data() # RUN this once and then use the new files generated
     preprocess_data(df_train, df_validate, df_test)
-    X_train, y_train, X_val, y_val, X_test, y_test = load_all_files()
+    X_train, y_train, X_val, y_val, X_test, y_test = load_all_files(vocabulary_size)
     return X_train, y_train, X_val, y_val, X_test, y_test
 
-def load_all_files():
+def load_all_files(vocabulary_size, load_vocab_file):
     df_train_data, df_train_targets = load_preprocessed_file(train_file_cleaned)
     df_validate_data, df_validate_targets = load_preprocessed_file(validate_file_cleaned)
     df_test_data, df_test_targets = load_preprocessed_file(test_file_cleaned)
-    bag_of_words, vec_model = transform_to_vec_values(df_train_data, df_train_targets, "clean_comments", 'train_with_tfidf.csv')
+    if load_vocab_file:
+        bag_of_words = cPickle.load(open(root_sarcasm_data_dir+"bag_of_words_values_"+str(vocabulary_size)+".pkl"))
+        print "bag of words size:", bag_of_words.shape
+        vocab = cPickle.load(open(root_sarcasm_data_dir+"bow_vocab_"+
+                                   str(vocabulary_size)+".pkl"))
+        vec_model = CountVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x, vocabulary=vocab)
+    else:
+        bag_of_words, vec_model = transform_to_vec_values(df_train_data, df_train_targets,
+                            "clean_comments", 'train_with_tfidf.csv', vocabulary_size)
     X_train = bag_of_words
     X_val = vec_model.transform(df_validate_data["clean_comments"])
     X_test = vec_model.transform(df_test_data["clean_comments"])

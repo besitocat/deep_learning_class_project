@@ -36,7 +36,7 @@ def train_model(classifier, X_train, y_train, epochs):
     return classifier
 
 def predict(classifier, X_val):
-    print "\nPredicting...."
+    print "\nPredicting...."," shape:", X_val.shape
     y_pred = classifier.predict(X_val)
     y_pred = (y_pred>0.5) #convert to binary output preedictions
     return y_pred
@@ -49,7 +49,8 @@ def evaluate(y_true, y_pred):
     print(classification_report(y_true, y_pred, target_names=target_names))
     
 
-def pipeline(is_first_run=False, train_with_real_data=True, epochs = 50, sample_test_file=None):
+def pipeline(is_first_run=False, train_with_real_data=True, epochs = 50, vocabulary_size=10000,
+             load_vocab_file=False, sample_test_file=None):
     '''
     Pipeline for training and testing the NN model. Please provide train_with_real_data = False, 
     if you want to test it with small files (validation file is used for training and a 
@@ -57,9 +58,9 @@ def pipeline(is_first_run=False, train_with_real_data=True, epochs = 50, sample_
     '''
     if train_with_real_data:
         if is_first_run:
-            X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm() # run this once to get all the data ready
+            X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm(vocabulary_size, load_vocab_file) # run this once to get all the data ready
         else:
-            X_train, y_train, X_val, y_val, X_test, y_test =  data_prep.load_all_files() # run this if you have already the preprocessed files
+            X_train, y_train, X_val, y_val, X_test, y_test =  data_prep.load_all_files(vocabulary_size, load_vocab_file) # run this if you have already the preprocessed files
     else:
         X_train, vec_model, y_train = data_prep.test_with_small_files()
         df_small_data, y_val = data_prep.load_preprocessed_file(sample_test_file)
@@ -71,7 +72,7 @@ def pipeline(is_first_run=False, train_with_real_data=True, epochs = 50, sample_
     evaluate(y_val, y_pred)
 
 
-def naive_bayes_pipeline(train_with_real_data=True, sample_test_file=None):
+def naive_bayes_pipeline(train_with_real_data=True, vocab_size=10000, load_vocab_file=True, sample_test_file=None):
     '''
     a test function that the data are in correct format and can be used for 
     training a simple NB model. Please provide train_with_real_data = False, 
@@ -79,7 +80,7 @@ def naive_bayes_pipeline(train_with_real_data=True, sample_test_file=None):
     and a 10 comment file is used for testing/validation)
     '''
     if train_with_real_data:
-        X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm()
+        X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm(vocab_size, load_vocab_file)
     else:
         X_train, vec_model, y_train = data_prep.test_with_small_files()
         df_small_data, y_val = data_prep.load_preprocessed_file(sample_test_file)
@@ -93,10 +94,10 @@ def naive_bayes_pipeline(train_with_real_data=True, sample_test_file=None):
                    
 def main():
     
-    pipeline(is_first_run=False, train_with_real_data=False,
-             epochs=3, sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")  #training with small files and testing with small file
+    pipeline(is_first_run=False, train_with_real_data=True,
+             epochs=1,vocabulary_size=10000,load_vocab_file=False, sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")  #training with small files and testing with small file
     
-#    naive_bayes_pipeline(train_with_real_data=False, 
+#    naive_bayes_pipeline(train_with_real_data=False, vocab_size=10000,load_vocab_file=True,
 #                         sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")   # a test with a simple NB model
     
 if __name__ == '__main__':
