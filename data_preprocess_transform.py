@@ -22,9 +22,9 @@ root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm
                                         #in a parent folder named "sarcasm_data"
 root_sarcasm_models_dir = "../sarcasm_models/"
 sacrcasm_file = "train-balanced-sarcasm.csv"
-train_file = root_sarcasm_data_dir + 'sarcasm_train.csv'
-test_file = root_sarcasm_data_dir + 'sarcasm_test.csv'
-validate_file = root_sarcasm_data_dir + 'sarcasm_validate.csv'
+train_file = 'sarcasm_train.csv'
+test_file = 'sarcasm_test.csv'
+validate_file = 'sarcasm_validate.csv'
 train_file_cleaned =  "train_cleaned.csv"
 validate_file_cleaned = "validate_cleaned.csv"
 test_file_cleaned = "test_cleaned.csv"
@@ -39,16 +39,16 @@ def load_data_and_split(root_sarcasm):
     train, validate = train_test_split(train, test_size=0.2, random_state=1)
     print "sizes:", "train:", len(train), ", validate:", len(validate), \
                                                         ", test:", len(test)
-    train.to_csv(train_file, sep=',')
-    test.to_csv(test_file, sep=',')
-    validate.to_csv(validate_file, sep=',')
+    train.to_csv(root_sarcasm_data_dir+train_file, sep=',')
+    test.to_csv(root_sarcasm_data_dir+test_file, sep=',')
+    validate.to_csv(root_sarcasm_data_dir+validate_file, sep=',')
     print "**** writing splitted files is COMPLETE ****"
     
     
 def load_file_sarcasm(filename):
     print "\n**** LOADING FILE: " + filename + "..."
     column_names = ['label','comment']#, 'parent_comment'] TODO: maybe merge this as well?
-    df = pd.read_csv(filename, usecols = column_names)
+    df = pd.read_csv(root_sarcasm_data_dir+filename, usecols = column_names)
     print "initial shape:", df['comment'].shape
     df['comment'].replace('', np.nan, inplace=True)
     df.dropna(subset=['comment'], inplace=True) #remove NaNs
@@ -66,20 +66,23 @@ def load_preprocessed_file(filename):
     print "total positive vs negative examples in dataset:\n", df_target['label'].value_counts()
     return df_data, df_target
 
-def preprocess_text(df, new_filename):
+def preprocess_text(df, new_filename, remove_stopwords):
     print "\n**** PREPROCESSING STARTED ...."
-    stopwords = nltk.corpus.stopwords.words('english')
-    stopwords.extend(["theres", "would", "could", "ive", "theyre", "dont", "since"])
     df['clean_comments'] = df['comment'].apply(lambda x:''.join([\
           re.sub('[^a-z\s]', '', i.lower()) for i in x if i not in string.punctuation]))
     df['clean_comments'] = df['clean_comments'].apply(nltk.word_tokenize)
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
-    df['clean_comments']= df['clean_comments'].apply(lambda x: [item for item in x\
+    if remove_stopwords:
+        stopwords = nltk.corpus.stopwords.words('english')
+        stopwords.extend(["theres", "would", "could", "ive", "theyre", "dont", "since"])
+        df['clean_comments']= df['clean_comments'].apply(lambda x: [item for item in x\
                                                           if item not in stopwords])
+    else:
+        new_filename = "with_stopwords_" + new_filename
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
-    print "\ncomments without stopwords\n",df['clean_comments'].head()
+    print "\ncomments with stopwords removed:"+str(remove_stopwords)+"\n",df['clean_comments'].head()
     print "shape:", df['clean_comments'].shape
 #    stemmer = PorterStemmer()
 #    df['stemmed_token_comments'] = df['clean_comments'].apply(lambda x: \
@@ -91,30 +94,30 @@ def preprocess_text(df, new_filename):
 
 def prepare_data():
     print "\n**** Preparing data for preprocessing...."
-    load_data_and_split(root_sarcasm_data_dir) 
-    df_train = load_file_sarcasm(train_file)
-    df_validate = load_file_sarcasm(validate_file)
+    load_data_and_split(root_sarcasm_data_dir+root_sarcasm_data_dir) 
+    df_train = load_file_sarcasm(root_sarcasm_data_dir+train_file)
+    df_validate = load_file_sarcasm(root_sarcasm_data_dir+validate_file)
     df_test = load_file_sarcasm(test_file)
     return df_train, df_validate, df_test
     
-def preprocess_data(df_train, df_validate, df_test):
+def preprocess_data(df_train, df_validate, df_test, remove_stopwords):
     print "\n**** Preprocessing data...."
-    preprocess_text(df_train, train_file_cleaned) 
-    preprocess_text(df_validate, validate_file_cleaned) 
-    preprocess_text(df_test, test_file_cleaned) 
+    preprocess_text(df_train, train_file_cleaned, remove_stopwords) 
+    preprocess_text(df_validate, validate_file_cleaned, remove_stopwords) 
+    preprocess_text(df_test, test_file_cleaned, remove_stopwords) 
     print "**** PREPROCESSING COMPLETED for all files"
 
-def transform_to_vec_values(df, df_labels, column_name, filename, vocabulary_size):
+def transform_to_vec_values(df, df_labels, column_name, filename, vocabulary_size, picklefile1, picklefile2):
     print "\n**** Transforming to numerical values.... to file: ", filename
 #    vec_model = TfidfVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x, use_idf=False)
     vec_model = CountVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x,max_features=vocabulary_size)
     bag_of_words = vec_model.fit_transform(df[column_name])
     #save to pickle file
-    cPickle.dump(bag_of_words, open(root_sarcasm_data_dir+"bag_of_words_values_"+
-                                   str(vocabulary_size)+".pkl", 'wb'))
+    cPickle.dump(bag_of_words, open(root_sarcasm_data_dir+ picklefile1, 'wb'))#"bag_of_words_values_"+
+                                   #str(vocabulary_size)+".pkl", 'wb'))
     print "shape of transformation:", bag_of_words.shape
-    cPickle.dump(vec_model.vocabulary_, open(root_sarcasm_data_dir+"bow_vocab_"+
-                                   str(vocabulary_size)+".pkl", 'wb'))
+    cPickle.dump(vec_model.vocabulary_, open(root_sarcasm_data_dir+picklefile2, 'wb'))#"bow_vocab_"+
+                                   #str(vocabulary_size)+".pkl", 'wb'))
     print "vocabulary size:", len(vec_model.get_feature_names())
     print "**** Transforming to TF-IDF ****"
     labels = list(df_labels['label'])
@@ -126,27 +129,36 @@ def transform_to_vec_values(df, df_labels, column_name, filename, vocabulary_siz
     return bag_of_words, vec_model
 
 
-def pipeline_sarcasm(vocabulary_size, load_vocab_file):
+def pipeline_sarcasm(vocabulary_size, load_vocab_file, remove_stopwords):
     print "\n********** Preparing data for Sarcasm dataset ******************"
     #if running for the first time: you must uncomment all the calls below!!
     df_train, df_validate, df_test = prepare_data() # RUN this once and then use the new files generated
-    preprocess_data(df_train, df_validate, df_test)
-    X_train, y_train, X_val, y_val, X_test, y_test = load_all_files(vocabulary_size)
+    preprocess_data(df_train, df_validate, df_test, remove_stopwords)
+    X_train, y_train, X_val, y_val, X_test, y_test = load_all_files(vocabulary_size, load_vocab_file, remove_stopwords)
     return X_train, y_train, X_val, y_val, X_test, y_test
 
-def load_all_files(vocabulary_size, load_vocab_file):
-    df_train_data, df_train_targets = load_preprocessed_file(train_file_cleaned)
-    df_validate_data, df_validate_targets = load_preprocessed_file(validate_file_cleaned)
-    df_test_data, df_test_targets = load_preprocessed_file(test_file_cleaned)
+def load_all_files(vocabulary_size, load_vocab_file, remove_stopwords):
+    if not remove_stopwords:
+        global train_file_cleaned, validate_file_cleaned, test_file_cleaned
+        train_file_cleaned = "with_stopwords_" + train_file_cleaned
+        validate_file_cleaned = "with_stopwords_" + validate_file_cleaned
+        test_file_cleaned = "with_stopwords_" + test_file_cleaned
+        tf_file = root_sarcasm_data_dir+"bag_of_words_values_"+ str(vocabulary_size)+"with_stopwords.pkl"
+        bow_vocab_file = root_sarcasm_data_dir+"bow_vocab_"+ str(vocabulary_size)+"with_stopwords.pkl"
+    else:
+        tf_file = root_sarcasm_data_dir+"bag_of_words_values_"+str(vocabulary_size)+".pkl"
+        bow_vocab_file = root_sarcasm_data_dir+"bow_vocab_"+ str(vocabulary_size)+".pkl"
+    df_train_data, df_train_targets = load_preprocessed_file(root_sarcasm_data_dir+train_file_cleaned)
+    df_validate_data, df_validate_targets = load_preprocessed_file(root_sarcasm_data_dir+validate_file_cleaned)
+    df_test_data, df_test_targets = load_preprocessed_file(root_sarcasm_data_dir+test_file_cleaned)
     if load_vocab_file:
-        bag_of_words = cPickle.load(open(root_sarcasm_data_dir+"bag_of_words_values_"+str(vocabulary_size)+".pkl"))
+        bag_of_words = cPickle.load(open(tf_file))
         print "bag of words size:", bag_of_words.shape
-        vocab = cPickle.load(open(root_sarcasm_data_dir+"bow_vocab_"+
-                                   str(vocabulary_size)+".pkl"))
+        vocab = cPickle.load(open(bow_vocab_file))
         vec_model = CountVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x, vocabulary=vocab)
     else:
         bag_of_words, vec_model = transform_to_vec_values(df_train_data, df_train_targets,
-                            "clean_comments", 'train_with_tfidf.csv', vocabulary_size)
+                            "clean_comments", 'train_with_tfidf.csv',vocabulary_size,tf_file,bow_vocab_file)
     X_train = bag_of_words
     X_val = vec_model.transform(df_validate_data["clean_comments"])
     X_test = vec_model.transform(df_test_data["clean_comments"])
