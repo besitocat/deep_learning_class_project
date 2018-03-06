@@ -6,7 +6,7 @@ def evaluate_rnn(ckpt_weights_file, eval_res_folder, x_data_path, y_data_path, m
                        hidden_activation, out_activation, hidden_dim, kernel_initializer, kernel_regularizer,
                        recurrent_regularizer, rnn_unit_type, bidirectional, embed_dim, emb_trainable, learning_rate,
                        batch_size, verbose):
-    x_data, y_data = utils.create_seq_input_data(x_data_path, y_data_path, max_seq_length)
+    x_data, y_data = utils.load_data(x_data_path, y_data_path)
     rnn_model = model.RNNModel(max_seq_length=max_seq_length, input_size=input_size, output_size=output_size,
                                embed_dim=embed_dim, emb_trainable=emb_trainable,
                                model_name=model_name, hidden_activation=hidden_activation,
@@ -22,13 +22,13 @@ def evaluate_rnn(ckpt_weights_file, eval_res_folder, x_data_path, y_data_path, m
         loss = scores[0]
         print("Evaluation loss: %.3f"%loss)
     predictions = rnn_model.predict(x_data, batch_size=batch_size, verbose=verbose)
-    utils.save_predictions(eval_res_folder, predictions)
+    utils.save_predictions(predictions, eval_res_folder, rnn_model.model_name+"_predictions.txt")
 
 
 def evaluate_ffn(ckpt_weights_file, eval_res_folder, x_data_path, y_data_path, input_size, output_size, model_name, hidden_activation,
                        out_activation, hidden_dims, layers, kernel_initializer, kernel_regularizer, learning_rate,
                        batch_size, verbose):
-    x_data, y_data = utils.create_nonseq_input_data(x_data_path, y_data_path)
+    x_data, y_data = utils.load_data(x_data_path, y_data_path)
     fnn_model = model.FFNModel(input_size=input_size, output_size=output_size, model_name=model_name,
                                hidden_activation=hidden_activation, out_activation=out_activation,
                                hidden_dims=hidden_dims,
@@ -42,4 +42,4 @@ def evaluate_ffn(ckpt_weights_file, eval_res_folder, x_data_path, y_data_path, i
         loss = scores[0]
         print("Evaluation loss: %.3f" % loss)
     predictions = fnn_model.predict(x_data, batch_size=batch_size, verbose=verbose)
-    utils.save_predictions(eval_res_folder, predictions)
+    utils.save_predictions(predictions, eval_res_folder, fnn_model.model_name+"_predictions.txt")

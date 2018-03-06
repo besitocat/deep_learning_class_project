@@ -25,7 +25,7 @@ class BaseModel(object):
         self.model = None
 
     def compile(self, metrics=[], optimizer='adam', loss="binary_crossentropy"):
-        self.model.compile(loss=self.loss_type, optimizer=optimizer, metrics=[loss] +metrics)
+        self.model.compile(loss=loss, optimizer=optimizer, metrics=[loss] +metrics)
 
     def fit(self, x_train, y_train, validation_data=None , n_epochs=10, batch_size=100, callbacks=None, verbose=1):
         return self.model.fit(x_train, y_train, validation_data=validation_data, epochs=n_epochs,
@@ -69,6 +69,7 @@ class FFNModel(BaseModel):
         self.layers = layers
         self.hidden_dims = hidden_dims
         self.dropouts = dropouts
+        self.build_model()
 
     def build_model(self):
         self.model = Sequential()
@@ -126,12 +127,12 @@ class RNNModel(BaseRNNModel):
         # This vector has size self.hidden_dim.
         if self.rnn_unit_type == 'rnn':
             recurrent_layer = SimpleRNN(self.hidden_dim, activation=self.hidden_activation,
-                                        kernel_initializer=self.kernel_initializer, input_dropout=self.input_dropout,
+                                        kernel_initializer=self.kernel_initializer, dropout=self.input_dropout,
                                         recurrent_dropout=self.recurrent_dropout,
                                         recurrent_regularizer=self.recurrent_regularizer, name="rnn")
         elif self.rnn_unit_type == 'lstm':
             recurrent_layer = LSTM(self.hidden_dim, activation=self.hidden_activation,
-                                   recurrent_regularizer=self.recurrent_regularizer, input_dropout=self.input_dropout,
+                                   recurrent_regularizer=self.recurrent_regularizer, dropout=self.input_dropout,
                                    ecurrent_dropout=self.recurrent_dropout,
                                    kernel_initializer=self.kernel_initializer, name="lstm")
         elif self.rnn_unit_type == 'gru':

@@ -3,11 +3,11 @@ from keras.preprocessing import sequence
 import numpy as np
 from keras.optimizers import Adagrad
 import os
-import pickle
+import cPickle
 
 
-def save_predictions(out_folder, predictions):
-    np.savetxt(os.path.join(out_folder,"predictions.txt"),predictions)
+def save_predictions(predictions, out_folder, filename="predictions.txt"):
+    np.savetxt(os.path.join(out_folder,filename),predictions)
     # with open(os.path.join(out_folder,"predictions.txt"),"w") as f:
     #     newline=""
     #     for preds in predictions:
@@ -42,10 +42,10 @@ def create_test_model_input_data(x_data_path, y_data_path, max_seq_length):
 
     # load a subset of imdb reviews to test the code
     with open(x_data_path, "r") as f:
-        x_train = pickle.load(f)
+        x_train = cPickle.load(f)
     if y_data_path is not None:
         with open(y_data_path, "r") as f:
-            y_train = pickle.load(f)
+            y_train = cPickle.load(f)
     # pad with zeros all sequences in order to have the same length
     # (i.e. the same number of timesteps). The zero timesteps will be ignored by the model.
     x_data = sequence.pad_sequences(x_train, maxlen=max_seq_length)
@@ -54,10 +54,10 @@ def create_test_model_input_data(x_data_path, y_data_path, max_seq_length):
         y_data = np.array(y_train)
     return x_data, y_data
 
+def load_file(data_path):
+    return cPickle.load(open(data_path))
 
-def create_seq_input_data(train_data_path, val_data_path, max_seq_length):
-    pass
-
-
-def create_nonseq_input_data(x_data_path, y_data_path):
-    pass
+def load_data(x_path,y_path):
+    x_train = load_file(x_path)
+    y_train = load_file(y_path)
+    return x_train,y_train
