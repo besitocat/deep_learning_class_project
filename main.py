@@ -1,105 +1,78 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb 23 10:57:40 2018
+import train_methods
+import eval_methods
 
-@author: evita
-"""
+#common parameters
+input_size = 2000
+output_size = 2
+model_name = "rnn_test"
+hidden_activation = "relu"
+out_activation = "sigmoid"
+kernel_initializer = "uniform"
+kernel_regularizer = None
 
-import data_preprocess_transform as data_prep
-from keras.models import Sequential
-from keras.layers import Dense
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
-from sklearn.cross_validation import cross_val_score
-from sklearn.naive_bayes import MultinomialNB
+#common parameters for training
+n_epochs = 20
+batch_size = 100
+learning_rate = 0.01
+save_checkpoint = True
+early_stopping = True
+verbose = 1
+loss_type = "binary_crossentropy"
 
-def create_model(input_size):
-    '''
-    Simple NN model. @Efi: do your magic here! 
-    '''
-    print "\nBuidling the model...."
-    classifier = Sequential()
-    # Adding the input layer and the first hidden layer
-    classifier.add(Dense(units = 5, kernel_initializer = 'uniform', activation = 'relu', input_dim = input_size))
-    # Adding the second hidden layer
-   # classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu'))
-    # Adding the output layer
-    classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
-    classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
-    return classifier 
+#rnn specific parameters
+rnn_unit_type = 'rnn'
+hidden_dim = 32
+embed_dim = 32
+emb_trainable = True
+bidirectional = False
+max_seq_length = 100
+recurrent_regularizer = None
+recurrent_dropout = 0.0
+input_dropout = 0.0
 
-    
-def train_model(classifier, X_train, y_train, epochs):
-    print "\nTraining the model...."
-    classifier.fit(X_train, y_train, batch_size = 4000, epochs = epochs)
-    return classifier
+#ffn specific parameters
+hidden_dims = [32]
+layers = 1
+dropouts = [0.0]
 
-def predict(classifier, X_val):
-    print "\nPredicting...."," shape:", X_val.shape
-    y_pred = classifier.predict(X_val)
-    y_pred = (y_pred>0.5) #convert to binary output preedictions
-    return y_pred
+model_type="rnn"
+x_train_path = "experiments/data/x_train_subset.pickle"
+y_train_path = "experiments/data/y_train_subset.pickle"
+x_val_path = "experiments/data/x_test_subset.pickle"
+y_val_path = "experiments/data/y_test_subset.pickle"
+eval_weights_ckpt = "experiments/trained_models/rnn_test.02-0.667.hdf5"
+eval_x_data = "experiments/data/x_test_subset.pickle"
+eval_y_data = "experiments/data/y_test_subset.pickle"
+eval_res_folder = "experiments/results"
 
-def evaluate(y_true, y_pred):
-    print "\nEvaluating..."
-    conf_matrix = confusion_matrix(y_true, y_pred)
-    print "\nConfusion matrix:\n", conf_matrix
-    target_names = ['class 0 (not sarcasm)', 'class 1 (sarcasm)']
-    print(classification_report(y_true, y_pred, target_names=target_names))
-    
+if __name__ == "__main__":
 
-def pipeline(is_first_run=False, train_with_real_data=True, epochs = 50, vocabulary_size=10000,
-             load_vocab_file=False, remove_stopwords=True, sample_test_file=None):
-    '''
-    Pipeline for training and testing the NN model. Please provide train_with_real_data = False, 
-    if you want to test it with small files (validation file is used for training and a 
-    10 comment file is used for testing/validation)
-    '''
-    if train_with_real_data:
-        if is_first_run:
-            X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm(vocabulary_size, load_vocab_file, remove_stopwords) # run this once to get all the data ready
-        else:
-            X_train, y_train, X_val, y_val, X_test, y_test =  data_prep.load_all_files(vocabulary_size, load_vocab_file, remove_stopwords) # run this if you have already the preprocessed files
+    if eval_weights_ckpt is not None:
+        if model_type == "rnn":
+            eval_methods.evaluate_rnn(eval_weights_ckpt, eval_res_folder, eval_x_data, eval_y_data, max_seq_length, input_size, output_size, model_name,
+                       hidden_activation, out_activation, hidden_dim, kernel_initializer, kernel_regularizer,
+                       recurrent_regularizer, rnn_unit_type, bidirectional, embed_dim, emb_trainable, learning_rate,
+                       batch_size, verbose)
+        elif model_type == "ffn":
+            eval_methods.evaluate_ffn(eval_weights_ckpt, eval_res_folder, eval_x_data, eval_y_data, input_size, output_size,
+                         model_name, hidden_activation,
+                         out_activation, hidden_dims, layers, kernel_initializer, kernel_regularizer, learning_rate,
+                         batch_size, verbose)
     else:
-        X_train, vec_model, y_train = data_prep.test_with_small_files()
-        df_small_data, y_val = data_prep.load_preprocessed_file(sample_test_file)
-        X_val = vec_model.transform(df_small_data["clean_comments"])
-    input_size = X_train.shape[1]
-    nn_model = create_model(input_size)
-    nn_model = train_model(nn_model, X_train, y_train, epochs)
-    y_pred = predict(nn_model, X_val)
-    evaluate(y_val, y_pred)
-
-
-def naive_bayes_pipeline(train_with_real_data=True, vocab_size=10000, load_vocab_file=True, sample_test_file=None):
-    '''
-    a test function that the data are in correct format and can be used for 
-    training a simple NB model. Please provide train_with_real_data = False, 
-    if you want to test it with small files (validation file is used for training 
-    and a 10 comment file is used for testing/validation)
-    '''
-    if train_with_real_data:
-        X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm(vocab_size, load_vocab_file)
-    else:
-        X_train, vec_model, y_train = data_prep.test_with_small_files()
-        df_small_data, y_val = data_prep.load_preprocessed_file(sample_test_file)
-        X_val = vec_model.transform(df_small_data["clean_comments"])
-    classifier = MultinomialNB()
-    classifier.fit(X_train, y_train)
-    print "predicting values"
-    print "test shape:", X_val.shape
-    y_pred = predict(classifier, X_val)
-    evaluate(y_val, y_pred)
-                   
-def main():
-    
-    pipeline(is_first_run=False, train_with_real_data=True,
-             epochs=1,vocabulary_size=10000,load_vocab_file=False,remove_stopwords=False,
-             sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")  #training with small files and testing with small file
-    
-#    naive_bayes_pipeline(train_with_real_data=False, vocab_size=10000,load_vocab_file=True,
-#                         sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")   # a test with a simple NB model
-    
-if __name__ == '__main__':
-    main()
+        if model_type=="rnn":
+            train_methods.train_rnn(x_train_path=x_train_path, y_train_path=y_train_path, x_val_path=x_val_path, y_val_path=y_val_path,
+                                    max_seq_length=max_seq_length, input_size=input_size, output_size=output_size,
+                                    model_name=model_name, hidden_activation=hidden_activation,
+                                    out_activation=out_activation, hidden_dim=hidden_dim, kernel_initializer=kernel_initializer,
+                                    kernel_regularizer=kernel_regularizer,
+                                    recurrent_regularizer=recurrent_regularizer, input_dropout=input_dropout, recurrent_dropout=recurrent_dropout,
+                                    rnn_unit_type=rnn_unit_type, bidirectional=bidirectional, embed_dim=embed_dim, emb_trainable=emb_trainable,
+                                    n_epochs=n_epochs, batch_size=batch_size, learning_rate=learning_rate, save_checkpoint=save_checkpoint,
+                                    early_stopping=early_stopping, verbose=verbose)
+        elif model_type=="ffn":
+            train_methods.train_ffn(x_train_path, y_train_path, x_val_path, y_val_path,
+                  input_size, output_size, model_name, hidden_activation,
+                  out_activation, hidden_dims, layers, kernel_initializer, kernel_regularizer, dropouts,
+                  n_epochs, batch_size, learning_rate,
+                  save_checkpoint,
+                  early_stopping, verbose)
