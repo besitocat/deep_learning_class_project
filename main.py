@@ -29,8 +29,8 @@ def add_arguments(parser):
                         help="A comma separated list of hidden sizes for each of the model layers. For RNN, only 1 layer"
                              " is supported.")
     parser.add_argument("--embed_dim", type=int, default=32, help="Embedding layer size.")
-    parser.add_argument("--emb_trainable", type=bool, default=True, help="Whether to use a trainable embedding layer.")
-    parser.add_argument("--bidirectional", type=bool, default=False, help="Whether to use o bidirectional RNN.")
+    parser.add_argument("--emb_trainable", type="bool", default=True, help="Whether to use a trainable embedding layer.")
+    parser.add_argument("--bidirectional", type="bool", default=False, help="Whether to use o bidirectional RNN.")
     parser.add_argument("--kernel_regularizer", type=str, default=None, help="Kernel regularizer for FFN model.")
     parser.add_argument("--recurrent_regularizer", type=str, default=None, help="Recurrent layer regularizer.")
     parser.add_argument("--recurrent_dropout", type=float, default=0.0, help="Dropout for hidden to hidden units.")
@@ -50,8 +50,8 @@ def add_arguments(parser):
     parser.add_argument("--n_epochs", type=int, default=10, help="Number of epochss.")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size.")
     parser.add_argument("--learning_rate", type=float, default=0.01, help="Learning rate.")
-    parser.add_argument("--save_checkpoint", type=bool, default=True, help="Whether to save a checkpoint at each epoch.")
-    parser.add_argument("--early_stopping", type=bool, default=True, help="Whether to do early stopping during training.")
+    parser.add_argument("--save_checkpoint", type="bool", default=True, help="Whether to save a checkpoint at each epoch.")
+    parser.add_argument("--early_stopping", type="bool", default=True, help="Whether to do early stopping during training.")
     parser.add_argument("--verbose", type=int, default=1, help="0|1. Verbose for training/evaluation.")
     parser.add_argument("--loss", type=str, default="binary_crossentropy", help="Loss function.")
 

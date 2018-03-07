@@ -11,9 +11,9 @@ from keras.models import Sequential
 from keras.layers import Dense
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
-from sklearn.cross_validation import cross_val_score
 from sklearn.naive_bayes import MultinomialNB
 import features_methods
+
 
 def create_model(input_size):
     '''
@@ -36,11 +36,13 @@ def train_model(classifier, X_train, y_train, epochs):
     classifier.fit(X_train, y_train, batch_size = 4000, epochs = epochs)
     return classifier
 
+
 def predict(classifier, X_val):
     print "\nPredicting...."," shape:", X_val.shape
     y_pred = classifier.predict(X_val)
     y_pred = (y_pred>0.5) #convert to binary output preedictions
     return y_pred
+
 
 def evaluate(y_true, y_pred):
     print "\nEvaluating..."
@@ -85,7 +87,7 @@ def naive_bayes_pipeline(train_with_real_data=True, vocab_size=10000, load_vocab
     and a 10 comment file is used for testing/validation)
     '''
     if train_with_real_data:
-        X_train, y_train, X_val, y_val, X_test, y_test = data_prep.pipeline_sarcasm(vocab_size, load_vocab_file)
+        X_train, y_train, X_val, y_val, X_test, y_test = pipeline_sarcasm(vocab_size, load_vocab_file)
     else:
         X_train, vec_model, y_train = data_prep.test_with_small_files()
         df_small_data, y_val = data_prep.load_preprocessed_file(sample_test_file)
@@ -99,7 +101,7 @@ def naive_bayes_pipeline(train_with_real_data=True, vocab_size=10000, load_vocab
                    
 def main():
     
-    pipeline(is_first_run=True, train_with_real_data=True,
+    pipeline(is_first_run=False, train_with_real_data=True,
              epochs=1, vocabulary_size=5000, load_vocab_file=False, remove_stopwords=False, subset_size=20000,
              sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")  #training with small files and testing with small file
     

@@ -71,7 +71,7 @@ S'experiments/data/x_train_seq.pickle'
 p31
 sS'bidirectional'
 p32
-I01
+I00
 sS'dropouts'
 p33
 (lp34

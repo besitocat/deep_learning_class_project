@@ -3,7 +3,7 @@ from keras.optimizers import Adagrad
 import model
 import os
 import utils
-
+import time
 
 def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, batch_size, learning_rate,
                 loss="binary_crossentropy", early_stopping=True, save_checkpoint=True, verbose=1):
@@ -22,8 +22,12 @@ def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, ba
         callbacks.append(stopping)
     adam = Adagrad(lr=learning_rate, epsilon=1e-08, decay=0.0, clipnorm=1.)
     model.compile(metrics=[], optimizer=adam, loss=loss)
+    print("Training of model '%s' started."%model.model_name)
+    start_time = time.time()
     history = model.fit(x_train, y_train, validation_data=validation_data, n_epochs=n_epochs,
                         batch_size=batch_size, callbacks=callbacks, verbose=verbose)
+    print("Training of model '%s' finished in %s." % (model.model_name,time.strftime("%H:%M:%S",
+                                                                                         time.gmtime(time.time()-start_time))))
     return history
 
 

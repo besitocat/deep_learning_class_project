@@ -4,7 +4,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from keras.preprocessing import sequence
 import os
 import numpy as np
-
+import argparse
 
 def fit_features_noseq(df_train_data, df_train_targets, vocabulary_size, load_vocab_file, tf_file, bow_vocab_file):
     if load_vocab_file:
@@ -21,6 +21,7 @@ def fit_features_noseq(df_train_data, df_train_targets, vocabulary_size, load_vo
 def transform_features_noseq(vec_model, df_validate_data):
     return vec_model.transform(df_validate_data)
 
+
 def get_vocab_filename(remove_stopwords, vocabulary_size):
     if not remove_stopwords:
         bow_vocab_file = preprocess.root_sarcasm_data_dir + "bow_vocab_" + str(vocabulary_size) + "with_stopwords.pkl"
@@ -32,9 +33,9 @@ def get_vocab_filename(remove_stopwords, vocabulary_size):
 def get_file_names(remove_stopwords,vocabulary_size):
     if not remove_stopwords:
         global train_file_cleaned, validate_file_cleaned, test_file_cleaned
-        train_file_cleaned = "with_stopwords_" + train_file_cleaned
-        validate_file_cleaned = "with_stopwords_" + validate_file_cleaned
-        test_file_cleaned = "with_stopwords_" + test_file_cleaned
+        train_file_cleaned = "with_stopwords_" + preprocess.train_file_cleaned
+        validate_file_cleaned = "with_stopwords_" + preprocess.validate_file_cleaned
+        test_file_cleaned = "with_stopwords_" + preprocess.test_file_cleaned
         tf_file = preprocess.root_sarcasm_data_dir+"bag_of_words_values_"+ str(vocabulary_size)+"with_stopwords.pkl"
         bow_vocab_file = get_vocab_filename(remove_stopwords, vocabulary_size)
     else:
@@ -123,34 +124,55 @@ def create_seq_features(vocab_file, vocabulary_size, remove_stopwords,max_seq_le
     y_test = np.reshape(df_test_targets.values,newshape=(df_test_targets.values.shape[0],))
     return x_train,y_train,x_val,y_val,x_test,y_test
 
-def save_features_labels(x_data,y_data,x_path,y_path):
+
+def save_features_and_labels(x_data, y_data, x_path, y_path):
     cPickle.dump(x_data, open(x_path, 'wb'))
     cPickle.dump(y_data, open(y_path, 'wb'))
 
 
-def features_pipeline(clean_data=False, out_folder="experiments/data"):
+def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False, out_folder="experiments/data", subset_size=50000, remove_stopwords=True):
     #clean data and make test and train/val splits. All splits are saved to files
     if clean_data:
-        preprocess.clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2, val_size=0.1)
+        preprocess.clean_and_split_data(subset_size=subset_size, remove_stopwords=remove_stopwords, test_size=0.2, val_size=0.1)
     # Load train/val files and extract train/val features.
-    X_train, y_train, X_val, y_val, x_test,y_test = create_noseq_features(vocabulary_size=5000, load_vocab_file=False, remove_stopwords=True)
+    X_train, y_train, X_val, y_val, x_test,y_test = create_noseq_features(vocabulary_size=vocabulary_size, load_vocab_file=False, remove_stopwords=remove_stopwords)
     # #Save train/val noseq features to files
-    save_features_labels(X_train, y_train, "experiments/data/x_train_noseq.pickle", "experiments/data/y_train_noseq.pickle")
-    save_features_labels(X_val, y_val, "experiments/data/x_val_noseq.pickle", "experiments/data/y_val_noseq.pickle")
-    save_features_labels(x_test, y_test, os.path.join(out_folder, "x_test_seq.pickle"),
-                         os.path.join(out_folder, "y_test_seq.pickle"))
-    vocab_file = get_vocab_filename(remove_stopwords=True, vocabulary_size=5000)
-    X_train, y_train, X_val, y_val,x_test,y_test = create_seq_features(vocab_file=vocab_file, vocabulary_size=5000, max_seq_length=150, remove_stopwords=True, padding='post')
-    save_features_labels(X_train, y_train, os.path.join(out_folder,"x_train_seq.pickle"),
-                         os.path.join(out_folder,"y_train_seq.pickle"))
-    save_features_labels(X_val, y_val, os.path.join(out_folder,"x_val_seq.pickle"), os.path.join(out_folder,"y_val_seq.pickle"))
-    save_features_labels(x_test, y_test, os.path.join(out_folder, "x_test_seq.pickle"),
-                         os.path.join(out_folder, "y_test_seq.pickle"))
+    save_features_and_labels(X_train, y_train, os.path.join(out_folder,"x_train_noseq.pickle"), os.path.join(out_folder,"y_train_noseq.pickle"))
+    save_features_and_labels(X_val, y_val, os.path.join(out_folder,"x_val_noseq.pickle"), os.path.join(out_folder,"y_val_noseq.pickle"))
+    save_features_and_labels(x_test, y_test, os.path.join(out_folder, "x_test_seq.pickle"),
+                             os.path.join(out_folder, "y_test_seq.pickle"))
+    vocab_file = get_vocab_filename(remove_stopwords=remove_stopwords, vocabulary_size=vocabulary_size)
+    X_train, y_train, X_val, y_val,x_test,y_test = create_seq_features(vocab_file=vocab_file, vocabulary_size=vocabulary_size,
+                                                                       max_seq_length=max_seq_length, remove_stopwords=remove_stopwords, padding='post')
+    save_features_and_labels(X_train, y_train, os.path.join(out_folder, "x_train_seq.pickle"),
+                             os.path.join(out_folder,"y_train_seq.pickle"))
+    save_features_and_labels(X_val, y_val, os.path.join(out_folder, "x_val_seq.pickle"), os.path.join(out_folder, "y_val_seq.pickle"))
+    save_features_and_labels(x_test, y_test, os.path.join(out_folder, "x_test_seq.pickle"),
+                             os.path.join(out_folder, "y_test_seq.pickle"))
+
+    print("Final sequential features were saved in folder %s in files: %s,%s,%s"%
+          (out_folder,"x_train_noseq.pickle","x_val_noseq.pickle","x_test_seq.pickle"))
+    print("Final non sequential features were saved in folder %s in files: %s,%s,%s" % (out_folder,
+                                                                                        "x_train_seq.pickle","x_val_seq.pickle",
+                                                                          "x_test_seq.pickle"))
+
+def add_arguments(parser):
+    parser.register("type", "bool", lambda v: v.lower() == "true")
+    parser.add_argument("--clean_data", type="bool", default=False)
+    parser.add_argument("--subset_size", type=str, default=None)
+    parser.add_argument("--remove_stopwords", type="bool", default=False)
+    parser.add_argument("--vocabulary_size", type=int, default=10000)
+    parser.add_argument("--max_seq_length", type=int, default=150)
+    parser.add_argument("--out_folder", type=str, default=None)
 
 
 def main():
-    features_pipeline(clean_data=False)
-    pass
+    parser = argparse.ArgumentParser()
+    add_arguments(parser)
+    params, unparsed = parser.parse_known_args()
+    features_pipeline(clean_data=params.clean_data, subset_size=int(params.subset_size) if params.subset_size else None,
+                      remove_stopwords=params.remove_stopwords , vocabulary_size=params.vocabulary_size,
+                      max_seq_length=params.max_seq_length, out_folder=params.out_folder)
 
 if __name__ == '__main__':
     main()
