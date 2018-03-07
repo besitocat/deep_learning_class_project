@@ -6,7 +6,7 @@ import utils
 
 
 def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, batch_size, learning_rate,
-                early_stopping=True, save_checkpoint=True, verbose=1):
+                loss="binary_crossentropy", early_stopping=True, save_checkpoint=True, verbose=1):
     callbacks = []
     if save_checkpoint:
         # save the model at every epoch. 'val_loss' is the monitored quantity.
@@ -21,66 +21,48 @@ def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, ba
         stopping = EarlyStopping(monitor="val_loss", min_delta=0, patience=15, verbose=verbose, mode='auto')
         callbacks.append(stopping)
     adam = Adagrad(lr=learning_rate, epsilon=1e-08, decay=0.0, clipnorm=1.)
-    model.compile(metrics=[], optimizer=adam)
+    model.compile(metrics=[], optimizer=adam, loss=loss)
     history = model.fit(x_train, y_train, validation_data=validation_data, n_epochs=n_epochs,
                         batch_size=batch_size, callbacks=callbacks, verbose=verbose)
     return history
 
 
-def train_ffn_model(x_train, y_train, x_val, y_val, out_dir, input_size, output_size, model_name, hidden_activation, out_activation,
-                 hidden_dims, layers, kernel_initializer, kernel_regularizer, dropouts,
-                    n_epochs, batch_size, learning_rate, save_checkpoint, early_stopping, verbose):
-    fnn_model = model.FFNModel(input_size=input_size, output_size=output_size, model_name=model_name,
-                               hidden_activation=hidden_activation, out_activation=out_activation, hidden_dims=hidden_dims,
-                               layers=layers, kernel_initializer=kernel_initializer, kernel_regularizer=kernel_regularizer,
-                               dropouts=dropouts)
-    history = train_model(fnn_model, x_train, y_train, out_dir, validation_data=(x_val, y_val), save_checkpoint=save_checkpoint,
-                n_epochs=n_epochs, batch_size=batch_size, verbose=verbose,
-                early_stopping=early_stopping, learning_rate=learning_rate)
+def train_ffn_model(x_train, y_train, x_val, y_val, params):
+    fnn_model = model.FFNModel(input_size=params["input_size"], output_size=params["output_size"],
+                               model_name=params["model_name"],
+                               hidden_activation=params["hidden_activation"], out_activation=params["out_activation"],
+                               hidden_dims=params["hidden_dims"],
+                               layers=params["layers"], kernel_initializer=params["kernel_initializer"],
+                               kernel_regularizer=params["kernel_regularizer"],
+                               dropouts=params["dropouts"])
+    history = train_model(fnn_model, x_train, y_train, params["out_dir"], validation_data=(x_val, y_val), save_checkpoint=params["save_checkpoint"],
+                n_epochs=params["n_epochs"], batch_size=params["batch_size"], verbose=params["verbose"],
+                early_stopping=params["early_stopping"], learning_rate=params["learning_rate"], loss=params["loss"])
     return utils.extract_results_from_history(history)
 
 
-def train_rnn_model(x_train, y_train, x_val, y_val, out_dir, max_seq_length, input_size, output_size, model_name, hidden_activation,
-                 out_activation, hidden_dim, kernel_initializer, kernel_regularizer,
-                 recurrent_regularizer, input_dropout, recurrent_dropout,
-                 rnn_unit_type, bidirectional, embed_dim, emb_trainable, n_epochs, batch_size, learning_rate, save_checkpoint,
-                    early_stopping, verbose):
-    rnn_model = model.RNNModel(max_seq_length=max_seq_length, input_size=input_size, output_size=output_size, embed_dim=embed_dim, emb_trainable=emb_trainable,
-                               model_name=model_name, hidden_activation=hidden_activation, out_activation=out_activation, hidden_dim=hidden_dim,
-                               kernel_initializer=kernel_initializer, kernel_regularizer=kernel_regularizer,
-                               recurrent_regularizer=recurrent_regularizer, input_dropout=input_dropout,
-                               recurrent_dropout=recurrent_dropout, rnn_unit_type=rnn_unit_type,  bidirectional=bidirectional)
-    history = train_model(rnn_model, x_train, y_train, out_dir=out_dir, validation_data=(x_val, y_val), save_checkpoint=save_checkpoint,
-                          n_epochs=n_epochs, batch_size=batch_size, verbose=verbose,
-                          early_stopping=early_stopping, learning_rate=learning_rate)
+def train_rnn_model(x_train, y_train, x_val, y_val, params):
+    rnn_model = model.RNNModel(max_seq_length=params["max_seq_length"], input_size=params["input_size"],
+                               output_size=params["output_size"], embed_dim=params["embed_dim"],
+                               emb_trainable=params["emb_trainable"], model_name=params["model_name"],
+                               hidden_activation=params["hidden_activation"], out_activation=params["out_activation"],
+                               hidden_dim=params["hidden_dims"][0], kernel_initializer=params["kernel_initializer"],
+                               kernel_regularizer=params["kernel_regularizer"], recurrent_regularizer=params["recurrent_regularizer"],
+                               input_dropout=params["input_dropout"], recurrent_dropout=params["recurrent_dropout"],
+                               rnn_unit_type=params["rnn_unit_type"],  bidirectional=params["bidirectional"])
+    history = train_model(rnn_model, x_train, y_train, out_dir=params["out_dir"], validation_data=(x_val, y_val), save_checkpoint=params["save_checkpoint"],
+                          n_epochs=params["n_epochs"], batch_size=params["batch_size"], verbose=params["verbose"],
+                          early_stopping=params["early_stopping"], learning_rate=params["learning_rate"], loss=params["loss"])
     return utils.extract_results_from_history(history)
 
 
-def train_rnn(x_train_path, y_train_path, x_val_path, y_val_path,out_dir,
-          max_seq_length, input_size, output_size, model_name="rnn_model", hidden_activation="relu",
-          out_activation="sigmoid", hidden_dim=32, kernel_initializer="uniform", kernel_regularizer=None,
-          recurrent_regularizer=None, input_dropout=0.0, recurrent_dropout=0.0,
-          rnn_unit_type="rnn", bidirectional=False, embed_dim=32, emb_trainable=False, n_epochs=10, batch_size=128,
-              learning_rate=0.01, save_checkpoint=True, early_stopping=True, verbose=1):
-    x_train, y_train = utils.load_data(x_train_path, y_train_path)
-    x_val, y_val = utils.load_data(x_val_path, y_val_path)
-    train_rnn_model(x_train, y_train, x_val, y_val, out_dir=out_dir, max_seq_length=max_seq_length, input_size=input_size, output_size=output_size,
-                    model_name=model_name, hidden_activation=hidden_activation,
-                    out_activation=out_activation, hidden_dim=hidden_dim, kernel_initializer=kernel_initializer, kernel_regularizer=kernel_regularizer,
-                    recurrent_regularizer=recurrent_regularizer, input_dropout=input_dropout, recurrent_dropout=recurrent_dropout,
-                    rnn_unit_type=rnn_unit_type, bidirectional=bidirectional, embed_dim=embed_dim, emb_trainable=emb_trainable,
-                    n_epochs=n_epochs, batch_size=batch_size, learning_rate=learning_rate, save_checkpoint=save_checkpoint,
-                    early_stopping=early_stopping, verbose=verbose)
+def train_rnn(params):
+    x_train, y_train = utils.load_data(params["x_train_path"], params["y_train_path"])
+    x_val, y_val = utils.load_data(params["x_val_path"], params["y_val_path"])
+    train_rnn_model(x_train, y_train, x_val, y_val, params)
 
 
-def train_ffn(x_train_path, y_train_path, x_val_path, y_val_path, out_dir,
-                  input_size, output_size, model_name="ffn_model", hidden_activation="relu",
-                  out_activation="sigmoid", hidden_dims=[32], layers=1, kernel_initializer="uniform", kernel_regularizer=None,
-                  dropouts=[0.0], n_epochs=10, batch_size=128, learning_rate=0.01,
-                  save_checkpoint=True, early_stopping=True, verbose=1):
-    x_train,y_train=utils.load_data(x_train_path,y_train_path)
-    x_val, y_val = utils.load_data(x_val_path, y_val_path)
-    train_ffn_model(x_train, y_train, x_val, y_val, out_dir=out_dir, input_size=input_size, output_size=output_size, model_name=model_name,
-                    hidden_activation=hidden_activation, out_activation=out_activation,
-             hidden_dims=hidden_dims, layers=layers, kernel_initializer=kernel_initializer, kernel_regularizer=kernel_regularizer, dropouts=dropouts,
-                n_epochs=n_epochs, batch_size=batch_size, learning_rate=learning_rate, save_checkpoint=save_checkpoint, early_stopping=early_stopping, verbose=verbose)
+def train_ffn(params):
+    x_train, y_train = utils.load_data(params["x_train_path"], params["y_train_path"])
+    x_val, y_val = utils.load_data(params["x_val_path"], params["y_val_path"])
+    train_ffn_model(x_train, y_train, x_val, y_val, params)
