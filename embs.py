@@ -12,10 +12,11 @@ def loadFastTextEmb():
         fword = values[0]
         coefs = np.asarray(values[1:], dtype='float32')
         embeddings_index[fword] = coefs
-    return embeddings_index
     print('found %s word vectors' % len(embeddings_index))
+    return embeddings_index
+   
     
 if __name__ == "__main__":
     embeddingDic= loadFastTextEmb()
-    embedding = embeddingDic['hello']
+    embedding = embeddingDic['ooov']
     print embedding

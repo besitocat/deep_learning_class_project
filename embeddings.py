@@ -32,9 +32,9 @@ def get_glove_embed(list_of_words):
     return glove_word_dict
 
 
-def get_fasttext_embed_for_word(word):
+def load_fasttext_embed_model():
     ff_model = FastText.load_fasttext_format(fast_text_file)
-    return ff_model[word]
+    return ff_model
 
 
 def get_fasttext_embed(list_of_words):
@@ -53,5 +53,10 @@ def main():
 #    print get_fasttext_embed_for_word('gegaegag')
 #    print fftext_embed
     
+    get_glove_embed(list_of_words)
+    print get_glove_embed
+    ff_embedding= load_fasttext_embed_model()
+    print ff_embedding['hasdinnn']
+
 if __name__ == "__main__":
     main()
