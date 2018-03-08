@@ -7,14 +7,16 @@ Created on Sat Feb 17 11:48:17 2018
 """
 import os
 import pandas as pd
+from gensim.models import KeyedVectors
 from sklearn.model_selection import train_test_split
 import nltk
 import string
 import re
-from sklearn.feature_extraction.text import CountVectorizer
 import cPickle
 import numpy as np
 from ast import literal_eval
+
+from features_methods import transform_to_vec_values
 
 root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv)
                                         #in a parent folder named "sarcasm_data"
@@ -79,7 +81,7 @@ def train_test_split_data(df, size, random_state=1234):
     return train
 
 
-def clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2, val_size=0.1):
+def  clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2, val_size=0.1):
     print "\n********** Preparing data for Sarcasm dataset ******************"
     # if running for the first time: you must uncomment all the calls below!!
     print "\n**** Preparing data for preprocessing...."
@@ -136,30 +138,52 @@ def preprocess_text(df, new_filename, remove_stopwords):
     print "**** PREPROCESSING COMPLETED. New file generated: " + new_filename
 
 
-
-def transform_to_vec_values(vec_model, df, df_labels, column_name, filename, tf_save_file):
-    print "\n**** Transforming to numerical values.... to file: ", filename
-#    vec_model = TfidfVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x, use_idf=False)
-    bag_of_words = vec_model.fit_transform(df[column_name])
-    #save to pickle file
-    cPickle.dump(bag_of_words, open(root_sarcasm_data_dir + tf_save_file, 'wb'))#"bag_of_words_values_"+
-                                   #str(vocabulary_size)+".pkl", 'wb'))
-    print "shape of transformation:", bag_of_words.shape
-    print "**** Transforming to TF-IDF ****"
-    labels = list(df_labels['label'])
-    df.insert(loc=0, column='label', value=labels)
-    df['tf-idf-transform'] = list(bag_of_words)
-    df.to_csv(root_sarcasm_data_dir + filename)
-    print "**** Transforming to TF-IDF is COMPLETE. New column - tf-idf-transform added to file: "\
-                                    + filename + " and the vectorized was saved into a pickle file"
-    return bag_of_words, vec_model
+def get_vocab_filename(remove_stopwords, vocabulary_size):
+    if not remove_stopwords:
+        bow_vocab_file = root_sarcasm_data_dir + "bow_vocab_" + str(vocabulary_size) + "with_stopwords.pkl"
+    else:
+        bow_vocab_file = root_sarcasm_data_dir+"bow_vocab_"+ str(vocabulary_size)+".pkl"
+    return bow_vocab_file
 
 
+def get_file_names(remove_stopwords,vocabulary_size):
+    if not remove_stopwords:
+        global train_file_cleaned, validate_file_cleaned, test_file_cleaned
+        train_file_cleaned = "with_stopwords_" + train_file_cleaned
+        validate_file_cleaned = "with_stopwords_" + validate_file_cleaned
+        test_file_cleaned = "with_stopwords_" + test_file_cleaned
+        tf_file = root_sarcasm_data_dir+"bag_of_words_values_"+ str(vocabulary_size)+"with_stopwords.pkl"
+        bow_vocab_file = get_vocab_filename(remove_stopwords, vocabulary_size)
+    else:
+        train_file_cleaned = train_file_cleaned
+        validate_file_cleaned = validate_file_cleaned
+        test_file_cleaned = test_file_cleaned
+        tf_file = root_sarcasm_data_dir+"bag_of_words_values_"+str(vocabulary_size)+".pkl"
+        bow_vocab_file = get_vocab_filename(remove_stopwords, vocabulary_size)
+    return train_file_cleaned,validate_file_cleaned,test_file_cleaned,tf_file,bow_vocab_file
 
 
+def save_labels(y_train,y_val,y_test,out_folder):
+    cPickle.dump(y_train, open(os.path.join(out_folder, "y_train.pickle"), 'wb'))
+    cPickle.dump(y_val, open(os.path.join(out_folder, "y_val.pickle"), 'wb'))
+    cPickle.dump(y_test, open(os.path.join(out_folder, "y_test.pickle"), 'wb'))
+    print("Labels shapes: ")
+    print("y_train shapes: ", y_train.shape)
+    print("y_val shapes: " , y_val.shape)
+    print("y_test shapes: " , y_test.shape)
+    print("\n")
 
-def main():
-    pass
+def load_to_gensim(filepath):
+    model = KeyedVectors.load_word2vec_format(filepath, binary=False) #GloVe Model - not updatable
+    return model
 
-if __name__ == '__main__':
-    main()
+
+def save_features(x_train,x_val,x_test,out_folder,suffix):
+    cPickle.dump(x_train, open(os.path.join(out_folder, "x_train_"+suffix+".pickle"), 'wb'))
+    cPickle.dump(x_val, open(os.path.join(out_folder, "x_val_"+suffix+".pickle"), 'wb'))
+    cPickle.dump(x_test, open(os.path.join(out_folder, "x_test_"+suffix+".pickle"), 'wb'))
+    print("%s features shapes: "%suffix)
+    print("x_train shapes: ",  x_train.shape)
+    print("x_val shapes: " , x_val.shape)
+    print("x_test shapes: " , x_test.shape)
+    print("\n")

@@ -29,7 +29,7 @@ def add_arguments(parser):
                         help="A comma separated list of hidden sizes for each of the model layers. For RNN, only 1 layer"
                              " is supported.")
     parser.add_argument("--embed_dim", type=int, default=32, help="Embedding layer size.")
-    parser.add_argument("--emb_trainable", type="bool", default=True, help="Whether to use a trainable embedding layer.")
+    parser.add_argument("--emb_trainable", type="bool", default=True, help="Whether to use a trainable embeddings layer.")
     parser.add_argument("--bidirectional", type="bool", default=False, help="Whether to use o bidirectional RNN.")
     parser.add_argument("--kernel_regularizer", type=str, default=None, help="Kernel regularizer for FFN model.")
     parser.add_argument("--recurrent_regularizer", type=str, default=None, help="Recurrent layer regularizer.")

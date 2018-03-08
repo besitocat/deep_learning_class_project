@@ -162,4 +162,4 @@ class RNNModel(BaseRNNModel):
         # output_dim is the dense vector size.
         return Embedding(input_dim=self.input_size, output_dim=self.embed_dim, mask_zero=True,
                          input_length=self.max_seq_length,
-                         trainable=self.emb_trainable, name="embedding")
+                         trainable=self.emb_trainable, name="embeddings")
