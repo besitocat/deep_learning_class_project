@@ -10,8 +10,11 @@ from gensim.models import KeyedVectors
 from tqdm import tqdm
 import codecs
 import numpy as np
+from gensim.models.wrappers import FastText
+#from gensim.models import FastText
 
 glove_file_english_only_100d = "glove/100d_glove_english_only.txt"
+fast_text_file = "../fasttext/wiki.simple"
 
 def load_to_gensim(glove_file_english_only):
     model = KeyedVectors.load_word2vec_format(glove_file_english_only_100d, binary=False) #GloVe Model - not updatable
@@ -28,24 +31,16 @@ def get_glove_embed(list_of_words):
 
 
 def get_fasttext_embed(word):
-    print('loading word embeddings...')
-    embeddings_index = {}
-    f = codecs.open('wiki.simple.vec', encoding='utf-8')
-    for line in tqdm(f):
-        values = line.rstrip().rsplit(' ')
-        fword = values[0]
-        coefs = np.asarray(values[1:], dtype='float32')
-        embeddings_index[fword] = coefs
-    print('found %s word vectors' % len(embeddings_index))
-    return embeddings_index[word]
+    ff_model = FastText.load_fasttext_format(fast_text_file)
+    return ff_model[word]
 
 
 def main():
     list_of_words = ['hello', 'how', 'are', 'oy', 'y444']
     get_glove_embed(list_of_words)
     print get_glove_embed
-    ff_embedding= get_fasttext_embed('hello')
-    print ff_embedding
+    ff_embedding= get_fasttext_embed('gegaegag')
+    print ff_embedding('girl')
 
 if __name__ == "__main__":
     main()
