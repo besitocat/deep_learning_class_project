@@ -49,14 +49,11 @@ def main():
     list_of_words = ['hello', 'how', 'are', 'oy', 'y444']
     glove_embed = get_glove_embed(list_of_words)
     fftext_embed = get_fasttext_embed(list_of_words)
-#    print glove_embed
-#    print get_fasttext_embed_for_word('gegaegag')
-#    print fftext_embed
-    
-    get_glove_embed(list_of_words)
-    print get_glove_embed
-    ff_embedding= load_fasttext_embed_model()
-    print ff_embedding['hasdinnn']
+    glove_embed = get_glove_embed(list_of_words)
+    print glove_embed
+    print fftext_embed
+#    ff_embedding= load_fasttext_embed_model()
+#    print ff_embedding['hasdinnn']
 
 if __name__ == "__main__":
     main()
