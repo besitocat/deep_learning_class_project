@@ -42,15 +42,15 @@ def get_fasttext_embed(list_of_words):
     ff_model = FastText.load_fasttext_format(fast_text_file)
     for w in list_of_words:
         words_embed_dict[w] = ff_model[w]
+        print w
     return words_embed_dict
 
 
 def main():
-    list_of_words = ['hello', 'how', 'are', 'oy', 'y444']
-    glove_embed = get_glove_embed(list_of_words)
+    list_of_words = ['hello', 'how', 'are', 'oy', 'fefe', 'hwrhw']
     fftext_embed = get_fasttext_embed(list_of_words)
     glove_embed = get_glove_embed(list_of_words)
-    print glove_embed
+#    print glove_embed
     print fftext_embed
 #    ff_embedding= load_fasttext_embed_model()
 #    print ff_embedding['hasdinnn']
