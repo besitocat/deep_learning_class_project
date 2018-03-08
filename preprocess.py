@@ -137,18 +137,14 @@ def preprocess_text(df, new_filename, remove_stopwords):
 
 
 
-def transform_to_vec_values(df, df_labels, column_name, filename, vocabulary_size, picklefile1, picklefile2):
+def transform_to_vec_values(vec_model, df, df_labels, column_name, filename, tf_save_file):
     print "\n**** Transforming to numerical values.... to file: ", filename
 #    vec_model = TfidfVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x, use_idf=False)
-    vec_model = CountVectorizer(preprocessor=lambda x: x, tokenizer=lambda x: x,max_features=vocabulary_size)
     bag_of_words = vec_model.fit_transform(df[column_name])
     #save to pickle file
-    cPickle.dump(bag_of_words, open(root_sarcasm_data_dir+ picklefile1, 'wb'))#"bag_of_words_values_"+
+    cPickle.dump(bag_of_words, open(root_sarcasm_data_dir + tf_save_file, 'wb'))#"bag_of_words_values_"+
                                    #str(vocabulary_size)+".pkl", 'wb'))
     print "shape of transformation:", bag_of_words.shape
-    cPickle.dump(vec_model.vocabulary_, open(root_sarcasm_data_dir+picklefile2, 'wb'))#"bow_vocab_"+
-                                   #str(vocabulary_size)+".pkl", 'wb'))
-    print "vocabulary size:", len(vec_model.get_feature_names())
     print "**** Transforming to TF-IDF ****"
     labels = list(df_labels['label'])
     df.insert(loc=0, column='label', value=labels)

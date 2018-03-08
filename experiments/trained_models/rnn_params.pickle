@@ -4,7 +4,7 @@ p2
 I1
 sS'output_size'
 p3
-I1
+I2
 sS'out_dir'
 p4
 S'experiments/trained_models'
@@ -20,7 +20,7 @@ p9
 I2
 sS'out_activation'
 p10
-S'sigmoid'
+S'softmax'
 p11
 sS'eval_weights_ckpt'
 p12
@@ -83,7 +83,7 @@ p36
 I01
 sS'loss'
 p37
-S'binary_crossentropy'
+S'categorical_crossentropy'
 p38
 sS'recurrent_regularizer'
 p39

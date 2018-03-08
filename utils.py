@@ -54,10 +54,12 @@ def create_test_model_input_data(x_data_path, y_data_path, max_seq_length):
         y_data = np.array(y_train)
     return x_data, y_data
 
-def load_file(data_path):
+
+def load_pickle_file(data_path):
     return cPickle.load(open(data_path))
 
+
 def load_data(x_path,y_path):
-    x_train = load_file(x_path)
-    y_train = load_file(y_path)
+    x_train = load_pickle_file(x_path)
+    y_train = load_pickle_file(y_path)
     return x_train,y_train
