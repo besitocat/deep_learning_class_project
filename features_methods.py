@@ -205,6 +205,8 @@ def create_seq_features(df_train_data, df_validate_data, df_test_data,
 
 def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False, out_folder="experiments/data",
                       subset_size=50000, min_freq=None, remove_stopwords=True, fast_text=False, glove=True, glove_map_file=None, fast_text_map_file=None):
+    noseq_prefix=str(subset_size)+"_"+str(vocabulary_size)+"_"+str(min_freq)+"_"
+    seq_prefix = str(subset_size) + "_" + str(vocabulary_size) + "_" + str(min_freq) + "_"+str(max_seq_length) + "_"
     import cPickle
     #clean data and make test and train/val splits. All splits are saved to files
     if clean_data:
@@ -241,7 +243,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         if glove_map_file is None:
             glove_map = create_glove_embeddings(vocab_freqs.keys(), "embedding/100d_glove_english_only.txt")
             print("Saving glove")
-            cPickle.dump(glove_map, open("experiments/data/glove_map.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(glove_map, open("experiments/data/glove_map"+str(subset_size)+".pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         else:
             glove_map = cPickle.load(open(glove_map_file))
         print("Glove map of size: %d"%len(glove_map))
@@ -250,7 +252,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         if fast_text_map_file is None:
             fast_text_map = create_fasttext_embeddings(vocab_freqs.keys(), "embedding/wiki.simple")
             print("Saving fasttext")
-            cPickle.dump(fast_text_map, open("experiments/data/fast_text_map.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(fast_text_map, open("experiments/data/fast_text_map"+str(subset_size)+".pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         else:
             fast_text_map = cPickle.load(open(fast_text_map_file))
         print("Fasttext map of size: %d" % len(fast_text_map))
@@ -261,13 +263,13 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     vocab_glove = None
     if glove:
         vocab_glove = build_embeddings_vocabulary(vocab_freqs, embeddings_map=glove_map, min_freq=min_freq, max_features=vocabulary_size)
-        cPickle.dump(vocab_glove,open("experiments/data/vocab_glove.pickle","wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump(vocab_glove,open("experiments/data/"+noseq_prefix+"vocab_glove.pickle","wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         print("Vocab size when glove embeddings: %d"%len(vocab_glove))
     # Fasttext vocabulary. Careful! It is different thatn Glove vocab, cause with fasttext we have an embeddings for all train words.
     vocab_fasttext = None
     if fast_text:
         vocab_fasttext = build_embeddings_vocabulary(vocab_freqs, embeddings_map=fast_text_map, min_freq=min_freq, max_features=vocabulary_size)
-        cPickle.dump(vocab_fasttext, open("experiments/data/vocab_fasttext.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump(vocab_fasttext, open("experiments/data/"+noseq_prefix+"vocab_fasttext.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         print("Vocab size when fasttext embeddings: %d" % len(vocab_fasttext))
     # Full vocabulary. We select max_features words. We DO NOT remove words that do not appear to some embeddings matrix.
     vocab_full = build_vocabulary(vocab_freqs, embeddings_map=None, min_freq=min_freq, max_features=vocabulary_size)
@@ -279,16 +281,16 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     x_train_bow, x_val_bow, x_test_bow, x_train_tfidf, x_val_tfidf, x_test_tfidf\
         = create_noseq_features(df_train_data,df_validate_data,df_test_data, 'clean_comments',vocab_full)
     print("Saving bow features...")
-    preprocess.save_features(x_train_bow, x_val_bow, x_test_bow, out_folder, suffix="bow_noseq")
+    preprocess.save_features(x_train_bow, x_val_bow, x_test_bow, out_folder, suffix=noseq_prefix+"bow_noseq")
     print("Saving tf-idf features...")
-    preprocess.save_features(x_train_tfidf, x_val_tfidf, x_test_tfidf, out_folder, suffix="tfidf_noseq")
+    preprocess.save_features(x_train_tfidf, x_val_tfidf, x_test_tfidf, out_folder, suffix=noseq_prefix+"tfidf_noseq")
 
     # create and save non sequential features from glove embeddings vocab.
     if glove:
         x_train, x_val, x_test = create_noseq_embed_features(df_train_data,df_validate_data,df_test_data,'clean_comments',
                                                                                     vocab_glove)
         print("Saving glove features...")
-        preprocess.save_features(x_train, x_val, x_test, out_folder, suffix="glove_emb_noseq")
+        preprocess.save_features(x_train, x_val, x_test, out_folder, suffix=noseq_prefix+"glove_emb_noseq")
 
 
     # create and save non sequential features from fasttext embeddings vocab.
@@ -296,7 +298,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         x_train, x_val, x_test = create_noseq_embed_features(df_train_data,df_validate_data,df_test_data,'clean_comments',
                                                                                     vocab_fasttext)
         print("Saving fasttext features...\n")
-        preprocess.save_features(x_train, x_val, x_test, out_folder, suffix="fasttext_emb_noseq")
+        preprocess.save_features(x_train, x_val, x_test, out_folder, suffix=noseq_prefix+"fasttext_emb_noseq")
 
     # create and save sequential features
     print("Creating Sequential features:")
@@ -304,26 +306,26 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         create_seq_features(df_train_data, df_validate_data,
                             df_test_data, 'clean_comments', vocab=vocab_full,
                             max_seq_length=max_seq_length, padding='post', embedding_map=None)
-    preprocess.save_features(x_train, x_val, x_test, out_folder, suffix="noemb_seq")
+    preprocess.save_features(x_train, x_val, x_test, out_folder, suffix=seq_prefix+"noemb_seq")
     if glove:
         vocab_glove_seq={word: i for i, word in enumerate(vocab_glove)}
-        cPickle.dump(vocab_glove_seq, open("experiments/data/vocab_glove_seq.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump(vocab_glove_seq, open("experiments/data/"+seq_prefix+"vocab_glove_seq.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         x_train, x_val,x_test,embedding_matrix = \
             create_seq_features(df_train_data, df_validate_data,
                                 df_test_data, 'clean_comments', vocab=vocab_glove_seq,
                                 max_seq_length=max_seq_length, padding='post', embedding_map=vocab_glove)
-        preprocess.save_features(x_train, x_val, x_test, out_folder, suffix="glove_seq")
-        cPickle.dump(embedding_matrix, open("experiments/data/glove_matrix.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+        preprocess.save_features(x_train, x_val, x_test, out_folder, suffix=seq_prefix+"glove_seq")
+        cPickle.dump(embedding_matrix, open("experiments/data/"+seq_prefix+"glove_matrix.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         print("Glove matrix shape: ",embedding_matrix.shape)
     if fast_text:
         vocab_fasttext_seq = {word: i for i, word in enumerate(vocab_fasttext)}
-        cPickle.dump(vocab_fasttext_seq, open("experiments/data/vocab_fasttext_seq.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump(vocab_fasttext_seq, open("experiments/data/"+seq_prefix+"vocab_fasttext_seq.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         x_train, x_val, x_test, embedding_matrix = \
             create_seq_features(df_train_data, df_validate_data,
                                 df_test_data, 'clean_comments', vocab={word:i for i,word in enumerate(vocab_fasttext)},
                                 max_seq_length=max_seq_length, padding='post', embedding_map=vocab_fasttext)
-        preprocess.save_features(x_train, x_val, x_test, out_folder, suffix="fast_text_seq")
-        cPickle.dump(embedding_matrix, open("experiments/data/fasttext_matrix.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+        preprocess.save_features(x_train, x_val, x_test, out_folder, suffix=seq_prefix+"fast_text_seq")
+        cPickle.dump(embedding_matrix, open("experiments/data/"+seq_prefix+"fasttext_matrix.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         print("Fasttext matrix shape: ", embedding_matrix.shape)
 
 
