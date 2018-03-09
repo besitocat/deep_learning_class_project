@@ -1,8 +1,10 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] ="4"
 import train_methods
 import eval_methods
 import argparse
 import cPickle
-import os
+
 
 
 def add_arguments(parser):
@@ -57,6 +59,7 @@ def add_arguments(parser):
 
     # Other
     parser.add_argument("--params_file", type=str, default=None, help="Load parameters from file.")
+    parser.add_argument("--gpu", type=str, default=None, help="Which GPU to use.")
 
 
 def process_params(params):
@@ -95,6 +98,9 @@ def ensure_compatible_params(loaded_params, input_params):
 
 
 def run_main(params):
+    import os
+    if params.gpu is not None:
+        os.environ["CUDA_VISIBLE_DEVICES"] = params.gpu
     params = vars(params)
     if params["params_file"] is not None:
         loaded_params = load_params(params["params_file"])
