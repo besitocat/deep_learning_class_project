@@ -4,8 +4,6 @@ import eval_methods
 import argparse
 import cPickle
 
-
-
 def add_arguments(parser):
     parser.register("type", "bool", lambda v: v.lower() == "true")
     # Data
@@ -100,6 +98,7 @@ def run_main(params):
     import os
     if params.gpu is not None:
         os.environ["CUDA_VISIBLE_DEVICES"] = params.gpu
+
     params = vars(params)
     if params["params_file"] is not None:
         loaded_params = load_params(params["params_file"])

@@ -28,6 +28,12 @@ def load_model(ckpt_weights_file, model, learning_rate):
     model.load_model_weights(ckpt_weights_file)
 
 
+def get_file_name(params):
+    return params["model_name"]+"_"+"insize"+"_"+str(params["input_size"])+"_"+"h_act"+"_"+params["hidden_activation"]\
+           +"_"+"out_act"+"_"+params["out_activation"]+"_"+"h_dims"+"_"+\
+           str(params["hidden_dims"])+"_"+"layers"+"_"+str(params["layers"])+"_"+"dropouts"+"_"+str(params["dropouts"])
+
+
 def extract_results_from_history(history):
     train_losses = history.history['loss']
     val_losses = history.history['val_loss']

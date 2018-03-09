@@ -6,13 +6,13 @@ import utils
 import time
 
 def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, batch_size, learning_rate,
-                loss="binary_crossentropy", early_stopping=True, save_checkpoint=True, verbose=1):
+                loss="binary_crossentropy", early_stopping=True, save_checkpoint=True, verbose=1, ckpt_name_prefix=""):
     callbacks = []
     if save_checkpoint:
         # save the model at every epoch. 'val_loss' is the monitored quantity.
         # If save_best_only=True, the model with the best monitored quantity is not overwitten.
         # If save_weights_only=True, only the model weights are saved calling the method model.save_weights
-        checkpoint = ModelCheckpoint(os.path.join(out_dir,model.model_name + ".{epoch:02d}-{val_loss:.3f}.hdf5"),
+        checkpoint = ModelCheckpoint(os.path.join(out_dir,ckpt_name_prefix + ".{epoch:02d}-{val_loss:.3f}.hdf5"),
                                           verbose=verbose, monitor='val_loss', save_weights_only=True, save_best_only=True)
         callbacks.append(checkpoint)
     if early_stopping:
@@ -41,7 +41,8 @@ def train_ffn_model(x_train, y_train, x_val, y_val, params):
                                dropouts=params["dropouts"])
     history = train_model(fnn_model, x_train, y_train, params["out_dir"], validation_data=(x_val, y_val), save_checkpoint=params["save_checkpoint"],
                 n_epochs=params["n_epochs"], batch_size=params["batch_size"], verbose=params["verbose"],
-                early_stopping=params["early_stopping"], learning_rate=params["learning_rate"], loss=params["loss"])
+                early_stopping=params["early_stopping"], learning_rate=params["learning_rate"], loss=params["loss"],
+                          ckpt_name_prefix=utils.get_file_name(params))
     return utils.extract_results_from_history(history)
 
 
@@ -56,7 +57,8 @@ def train_rnn_model(x_train, y_train, x_val, y_val, params):
                                rnn_unit_type=params["rnn_unit_type"],  bidirectional=params["bidirectional"])
     history = train_model(rnn_model, x_train, y_train, out_dir=params["out_dir"], validation_data=(x_val, y_val), save_checkpoint=params["save_checkpoint"],
                           n_epochs=params["n_epochs"], batch_size=params["batch_size"], verbose=params["verbose"],
-                          early_stopping=params["early_stopping"], learning_rate=params["learning_rate"], loss=params["loss"])
+                          early_stopping=params["early_stopping"], learning_rate=params["learning_rate"], loss=params["loss"],
+                          ckpt_name_prefix=utils.get_file_name(params))
     return utils.extract_results_from_history(history)
 
 
