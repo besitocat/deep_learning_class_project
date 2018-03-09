@@ -327,7 +327,10 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         preprocess.save_features(x_train, x_val, x_test, out_folder, suffix=seq_prefix+"fast_text_seq")
         cPickle.dump(embedding_matrix, open("experiments/data/"+seq_prefix+"fasttext_matrix.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         print("Fasttext matrix shape: ", embedding_matrix.shape)
-
+        print("\n")
+        print("Done creating features.")
+        print("Subset size: %d,Max vocab size: %d, Min freq: %d, Max seq length: %d"%
+              (subset_size,vocabulary_size,min_freq,max_seq_length))
 
 
 
