@@ -1,5 +1,5 @@
 import cPickle
-
+print("%s"%str(None))
 import preprocess
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from keras.preprocessing import sequence
@@ -329,8 +329,8 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         print("Fasttext matrix shape: ", embedding_matrix.shape)
         print("\n")
         print("Done creating features.")
-        print("Subset size: %d,Max vocab size: %d, Min freq: %d, Max seq length: %d"%
-              (subset_size,vocabulary_size,min_freq,max_seq_length))
+        print("Subset size: %s,Max vocab size: %s, Min freq: %s, Max seq length: %s"%
+              (str(subset_size),str(vocabulary_size),str(min_freq),str(max_seq_length)))
 
 
 
