@@ -37,6 +37,8 @@ def get_file_name(params):
 def extract_results_from_history(history):
     train_losses = history.history['loss']
     val_losses = history.history['val_loss']
+    print("train losses: %s"%train_losses)
+    print("val losses: %s" % val_losses)
     print "min val loss: %f at epoch: %d" % (np.min(val_losses), np.argmin(val_losses) + 1)
     print "train loss: %f at epoch: %d" % (train_losses[np.argmin(val_losses)], np.argmin(val_losses) + 1)
     results = model.TrainResults(train_losses[np.argmin(val_losses)], np.min(val_losses), np.argmin(val_losses) + 1)
