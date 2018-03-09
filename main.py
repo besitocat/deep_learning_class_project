@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] ="4"
 import train_methods
 import eval_methods
 import argparse
