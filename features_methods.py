@@ -328,7 +328,8 @@ def main():
     features_pipeline(clean_data=params.clean_data, subset_size=int(params.subset_size) if params.subset_size else None,
                       remove_stopwords=params.remove_stopwords , vocabulary_size=params.vocabulary_size,
                       max_seq_length=params.max_seq_length, out_folder=params.out_folder,
-                      glove_map_file="experiments/data/glove_map.pickle", fast_text_map_file=None, glove=True, fast_text=True)
+                      glove_map_file=params.glove_map_file, fast_text_map_file=params.fast_text_map_file,
+                      glove=params.glove, fast_text=params.fast_text)
 
 if __name__ == '__main__':
     main()
