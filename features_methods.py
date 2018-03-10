@@ -180,11 +180,6 @@ def create_seq_features(df_train_data, df_validate_data, df_test_data,
     val_data = replace_oov_words(val_data, vocab, unk="<unk>")
     test_data = replace_oov_words(test_data, vocab, unk="<unk>")
 
-    #add unk symbol to vocab
-    vocab["<unk>"]=len(vocab)
-    #start vocab from 1 to account for masking
-    vocab={key:value+1 for key,value in vocab.items()}
-
     train_data=map_words_to_indices(train_data, vocab)
     val_data=map_words_to_indices(val_data, vocab)
     test_data=map_words_to_indices(test_data, vocab)
@@ -305,6 +300,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     if seq_features:
         # create and save sequential features
         print("Creating Sequential features:")
+        extend_vocab_for_seq(vocab_full)
         x_train, x_val, x_test, embedding_matrix = \
             create_seq_features(df_train_data, df_validate_data,
                                 df_test_data, 'clean_comments', vocab=vocab_full,
@@ -312,6 +308,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         preprocess.save_features(x_train, x_val, x_test, out_folder+"/sequential/", suffix=seq_prefix+"noemb_seq")
         if glove:
             vocab_glove_seq={word: i for i, word in enumerate(vocab_glove)}
+            extend_vocab_for_seq(vocab_glove_seq)
             cPickle.dump(vocab_glove_seq, open("experiments/data/sequential/"+seq_prefix+"vocab_glove_seq.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
             x_train, x_val,x_test,embedding_matrix = \
                 create_seq_features(df_train_data, df_validate_data,
@@ -322,6 +319,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
             print("Glove matrix shape: ",embedding_matrix.shape)
         if fast_text:
             vocab_fasttext_seq = {word: i for i, word in enumerate(vocab_fasttext)}
+            extend_vocab_for_seq(vocab_fasttext_seq)
             cPickle.dump(vocab_fasttext_seq, open("experiments/data/sequential/"+seq_prefix+"vocab_fasttext_seq.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
             x_train, x_val, x_test, embedding_matrix = \
                 create_seq_features(df_train_data, df_validate_data,
@@ -335,7 +333,11 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
             print("Subset size: %s,Max vocab size: %s, Min freq: %s, Max seq length: %s"%
                   (str(subset_size),str(vocabulary_size),str(min_freq),str(max_seq_length)))
 
-
+def extend_vocab_for_seq(vocab):
+    # add unk symbol to vocab
+    vocab["<unk>"] = len(vocab)
+    # start vocab from 1 to account for masking
+    vocab.update((key,value + 1) for key, value in vocab.items())
 
 def add_arguments(parser):
     parser.register("type", "bool", lambda v: v.lower() == "true")
