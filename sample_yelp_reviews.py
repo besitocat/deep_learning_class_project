@@ -28,6 +28,7 @@ def load_data(root_yelp, yelp_file, subset_size=None):
     df = df[df.stars != 0.0]
     df = df[df.stars != 10.0]
     df = df[df.stars != 9.0]
+    print "initial stats:"
     print df['stars'].value_counts()
     if subset_size is not None:
         df=df.sample(n=subset_size, random_state=123)
@@ -38,18 +39,16 @@ def sample():
     yelp_df.dropna(axis=0, how='any')
     df_new, balanced_stats = balance_sample(yelp_df)
     print balanced_stats 
-    print "after balancing out..."
+    print "after balancing out stats..."
     print df_new['stars'].value_counts()
     df_new.rename(columns={'stars': 'label', 'text': 'comment'}, inplace=True)
-    df_new['text length'] = yelp_df['comment'].apply(len)
-    print "mean review length", df_new['text length'].mean()
     df_new.to_csv(root_yelp_data_dir + yelp_new_sampled, sep=',')
     print df_new.describe
     
     
 def balance_sample(df):
     balanced_stats = df.groupby('stars')
-    df.apply(lambda x: x.sample(balanced_stats.size().min()).reset_index(drop=True), random_state=123)
+    df.apply(lambda x: x.sample(balanced_stats.size().min(), random_state=123).reset_index(drop=True))
     return df, balanced_stats
 
 
