@@ -57,7 +57,9 @@ def load_data(root_sarcasm, subset_size=None):
     if not os.path.exists(root_sarcasm):
         os.makedirs(root_sarcasm)
     df = pd.read_csv(root_sarcasm + sacrcasm_file)
+    print("Total data: %d"%len(df))
     if subset_size is not None:
+        print("Extracted data subset: %d" % subset_size)
         df=df.sample(n=subset_size)
     return df
 
@@ -96,11 +98,12 @@ def  clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.
     df_validate = load_file_sarcasm(root_sarcasm_data_dir + validate_file)
     df_test = load_file_sarcasm(test_file)
     print "\n**** Preprocessing data...."
-    preprocess_text(df_test, test_file_cleaned, remove_stopwords)
 
     # preprocess all splits below, if we create multiple splits.
     preprocess_text(df_train, train_file_cleaned, remove_stopwords)
     preprocess_text(df_validate, validate_file_cleaned, remove_stopwords)
+
+    preprocess_text(df_test, test_file_cleaned, remove_stopwords)
     print "**** PREPROCESSING COMPLETED for all files"
 
 
