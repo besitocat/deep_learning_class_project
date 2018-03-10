@@ -12,6 +12,8 @@ def add_arguments(parser):
     parser.add_argument("--x_val_path", type=str, default=None, help="Input validation path.")
     parser.add_argument("--y_val_path", type=str, default=None, help="Output validation path.")
     parser.add_argument("--out_dir", type=str, default=None, help="Output folder to save the trained models.")
+    parser.add_argument("--embs_matrix_file", type=str, default=None, help="Pretrained embeddings file")
+    parser.add_argument("--vocab_file", type=str, default=None, help="Vocabulary file.")
 
     # Model
     parser.add_argument("--model_type", type=str, default="ffn", help="ffn|rnn. Type of model to run.")
@@ -37,6 +39,7 @@ def add_arguments(parser):
     parser.add_argument("--layers", type=int, default=1, help="Number of layers. For RNN, only 1 layer is supported.")
     parser.add_argument("--dropouts", type=str, default="0.0", help="A comma separated list of dropout values for each of "
                                                                   "the FFN layers.")
+    parser.add_argument("--attention", type="bool", default=False, help="Whether to use attention.")
 
     # Evaluation
     parser.add_argument("--eval_weights_ckpt", type=str, default=None, help="Checkpoint to load model weights for evaluation.")
@@ -62,6 +65,10 @@ def add_arguments(parser):
 def process_params(params):
     params["hidden_dims"] = [int(token) for token in params["hidden_dims"].split(",")]
     params["dropouts"] = [float(token) for token in params["dropouts"].split(",")]
+    params["embs_matrix"] = None
+    if params["embs_matrix_file"]:
+        embs_matrix = cPickle.load(open(params["embs_matrix_file"]))
+        params["embs_matrix"]=embs_matrix
     # Add error messages for inconsistent parameter combinations.
     if params["layers"]>1 and params["model_type"]=="rnn":
         raise ValueError("We only support RNN with 1 layer.")
