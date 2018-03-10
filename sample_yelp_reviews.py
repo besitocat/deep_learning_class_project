@@ -52,7 +52,7 @@ def balance_sample(df):
 
 
 def main():
-    sample(subset_size=50000)
+    sample(subset_size=1500000)
 
 if __name__ == '__main__':
     main()
