@@ -201,7 +201,7 @@ def create_seq_features(df_train_data, df_validate_data, df_test_data,
 
 def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False, out_folder="experiments/data",
                       subset_size=50000, min_freq=None, remove_stopwords=True, fast_text=False, glove=True,
-                      glove_map_file=None, fast_text_map_file=None, seq_features=True):
+                      glove_map_file=None, fast_text_map_file=None, seq_features=True, glove_file="embedding/100d_glove_english_only.txt"):
     noseq_prefix=str(subset_size)+"_"+str(vocabulary_size)+"_"+str(min_freq)+"_"
     seq_prefix = str(subset_size) + "_" + str(vocabulary_size) + "_" + str(min_freq) + "_"+str(max_seq_length) + "_"
     import cPickle
@@ -244,7 +244,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     glove_map=None
     if glove:
         if glove_map_file is None:
-            glove_map = create_glove_embeddings(vocab_freqs.keys(), "embedding/100d_glove_english_only.txt")
+            glove_map = create_glove_embeddings(vocab_freqs.keys(), glove_file)
             print("Saving glove")
             cPickle.dump(glove_map, open(os.path.join(out_folder,"glove_map"+str(subset_size)+".pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         else:
@@ -364,6 +364,7 @@ def add_arguments(parser):
     parser.add_argument("--glove_map_file", type=str, default=None)
     parser.add_argument("--seq_features", type="bool", default=True)
     parser.add_argument("--is_yelp", type="bool", default=True)
+    parser.add_argument("--glove_file", type=str, default="embedding/100d_glove_english_only.txt")
 def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
@@ -375,7 +376,7 @@ def main():
                       min_freq=int(params.min_freq) if params.min_freq else None,
                       max_seq_length=int(params.max_seq_length) if params.max_seq_length else None, out_folder=params.out_folder,
                       glove_map_file=params.glove_map_file, fast_text_map_file=params.fast_text_map_file,
-                      glove=params.glove, fast_text=params.fast_text, seq_features=params.seq_features)
+                      glove=params.glove, fast_text=params.fast_text, seq_features=params.seq_features, glove_file=params.glove_file)
 
 if __name__ == '__main__':
     main()
