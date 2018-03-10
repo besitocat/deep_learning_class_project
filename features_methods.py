@@ -255,7 +255,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         if fast_text_map_file is None:
             fast_text_map = create_fasttext_embeddings(vocab_freqs.keys(), "embedding/wiki.simple")
             print("Saving fasttext")
-            cPickle.dump(fast_text_map, os.path.join(out_folder,"fast_text_map"+str(subset_size)+".pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(fast_text_map, open(os.path.join(out_folder,"fast_text_map"+str(subset_size)+".pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         else:
             fast_text_map = cPickle.load(open(fast_text_map_file))
         print("Fasttext map of size: %d" % len(fast_text_map))
