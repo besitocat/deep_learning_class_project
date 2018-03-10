@@ -43,7 +43,7 @@ def sample():
     print df_new['stars'].value_counts()
     df_new.rename(columns={'stars': 'label', 'text': 'comment'}, inplace=True)
     df_new.to_csv(root_yelp_data_dir + yelp_new_sampled, sep=',')
-    print df_new.describe
+#    print df_new.describe
     
     
 def balance_sample(df):

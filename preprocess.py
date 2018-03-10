@@ -15,20 +15,28 @@ import re
 import cPickle
 import numpy as np
 from ast import literal_eval
-
-from features_methods import transform_to_vec_values
+#from features_methods import transform_to_vec_values
 
 root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv)
                                         #in a parent folder named "sarcasm_data"
 root_sarcasm_models_dir = "../sarcasm_models/"
-sacrcasm_file = "train-balanced-sarcasm.csv"
-train_file = 'sarcasm_train.csv'
-test_file = 'sarcasm_test.csv'
-validate_file = 'sarcasm_validate.csv'
+sarcasm_file = "train-balanced-sarcasm.csv"
+train_file = 'train.csv'
+test_file = 'test.csv'
+validate_file = 'validate.csv'
 train_file_cleaned =  "train_cleaned.csv"
 validate_file_cleaned = "validate_cleaned.csv"
 test_file_cleaned = "test_cleaned.csv"
+root_yelp_data_dir = "../yelp_data/" #put the data (review.csv)
+                                        #in a parent folder named "yelp_data"
+yelp_file = "review_sampled.csv"
 
+def prepare_for_yelp(is_yelp=True):
+    if is_yelp:
+        global root_sarcasm_data_dir, sarcasm_file
+        root_sarcasm_data_dir = root_yelp_data_dir
+        sarcasm_file = yelp_file
+        print "replaced with new:", root_sarcasm_data_dir, sarcasm_file
 
 def load_file_sarcasm(filename):
     print "\n**** LOADING FILE: " + filename + "..."
@@ -53,10 +61,10 @@ def load_preprocessed_file(filename):
 
 def load_data(root_sarcasm, subset_size=None):
     print "\n**** Loading data****"
-    print "**** loading file.. :" + sacrcasm_file
+    print "**** loading file.. :" + sarcasm_file
     if not os.path.exists(root_sarcasm):
         os.makedirs(root_sarcasm)
-    df = pd.read_csv(root_sarcasm + sacrcasm_file)
+    df = pd.read_csv(root_sarcasm + sarcasm_file)
     if subset_size is not None:
         df=df.sample(n=subset_size)
     return df
@@ -81,14 +89,15 @@ def train_test_split_data(df, size, random_state=1234):
     return train
 
 
-def  clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2, val_size=0.1):
+def clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2, val_size=0.1):
     print "\n********** Preparing data for Sarcasm dataset ******************"
     # if running for the first time: you must uncomment all the calls below!!
     print "\n**** Preparing data for preprocessing...."
     # load data
-    df = load_data(root_sarcasm_data_dir + root_sarcasm_data_dir, subset_size=subset_size)
+    
+    df_sarcasm = load_data(root_sarcasm_data_dir, subset_size=subset_size)
     # Firstly, extract test data. Always do this with the same random state.
-    train = train_test_split_data(df, test_size, random_state=1234)
+    train = train_test_split_data(df_sarcasm, test_size, random_state=1234)
     # split rest data into train/val sets
     train_val_split_data(train, val_size)
 
@@ -187,3 +196,10 @@ def save_features(x_train,x_val,x_test,out_folder,suffix):
     print("x_val shapes: " , x_val.shape)
     print("x_test shapes: " , x_test.shape)
     print("\n")
+    
+def main():
+    prepare_for_yelp(is_yelp=True)
+    
+if __name__ == '__main__':
+    main()
+    

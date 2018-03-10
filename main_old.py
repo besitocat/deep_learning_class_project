@@ -12,8 +12,7 @@ from keras.layers import Dense
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.naive_bayes import MultinomialNB
-import features_methods
-
+#import features_methods
 
 def create_model(input_size):
     '''
@@ -100,9 +99,9 @@ def naive_bayes_pipeline(train_with_real_data=True, vocab_size=10000, load_vocab
     evaluate(y_val, y_pred)
                    
 def main():
-    
-    pipeline(is_first_run=False, train_with_real_data=True,
-             epochs=1, vocabulary_size=5000, load_vocab_file=False, remove_stopwords=False, subset_size=20000,
+    data_prep.prepare_for_yelp(is_yelp=True)
+    pipeline(is_first_run=True, train_with_real_data=True,
+             epochs=1, vocabulary_size=5000, load_vocab_file=True, remove_stopwords=False, subset_size=20000,
              sample_test_file=data_prep.root_sarcasm_data_dir + "small_train.csv")  #training with small files and testing with small file
     
 #    naive_bayes_pipeline(train_with_real_data=False, vocab_size=10000,load_vocab_file=True,
