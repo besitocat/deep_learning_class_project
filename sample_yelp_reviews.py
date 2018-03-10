@@ -34,11 +34,10 @@ def load_data(root_yelp, yelp_file, subset_size=None):
         df=df.sample(n=subset_size, random_state=123)
     return df
 
-def sample():
-    yelp_df = load_data(root_yelp_data_dir, yelp_original_file, subset_size = 1500000)
+def sample(subset_size = None):
+    yelp_df = load_data(root_yelp_data_dir, yelp_original_file, subset_size = subset_size)
     yelp_df.dropna(axis=0, how='any')
-    df_new, balanced_stats = balance_sample(yelp_df)
-    print balanced_stats 
+    df_new = balance_sample(yelp_df)
     print "after balancing out stats..."
     print df_new['stars'].value_counts()
     df_new.rename(columns={'stars': 'label', 'text': 'comment'}, inplace=True)
@@ -47,13 +46,13 @@ def sample():
     
     
 def balance_sample(df):
-    balanced_stats = df.groupby('stars')
-    df.apply(lambda x: x.sample(balanced_stats.size().min(), random_state=123).reset_index(drop=True))
-    return df, balanced_stats
+    balanced_df = df.groupby('stars')
+    balanced_df = balanced_df.apply(lambda x: x.sample(balanced_df.size().min(), random_state=123)).reset_index(drop=True)
+    return balanced_df
 
 
 def main():
-    sample()
+    sample(subset_size=50000)
 
 if __name__ == '__main__':
     main()
