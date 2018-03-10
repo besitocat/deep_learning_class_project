@@ -354,7 +354,7 @@ def add_arguments(parser):
     parser.add_argument("--clean_data", type="bool", default=False)
     parser.add_argument("--subset_size", type=str, default=None)
     parser.add_argument("--remove_stopwords", type="bool", default=False)
-    parser.add_argument("--vocabulary_size", type=int, default=10000)
+    parser.add_argument("--vocabulary_size", type=str, default=None)
     parser.add_argument("--min_freq", type=str, default=None)
     parser.add_argument("--max_seq_length", type=str, default=None)
     parser.add_argument("--out_folder", type=str, default=None)
@@ -371,7 +371,7 @@ def main():
     if params.is_yelp:
         preprocess.prepare_for_yelp(is_yelp=True)
     features_pipeline(clean_data=params.clean_data, subset_size=int(params.subset_size) if params.subset_size else None,
-                      remove_stopwords=params.remove_stopwords , vocabulary_size=params.vocabulary_size,
+                      remove_stopwords=params.remove_stopwords , vocabulary_size=int(params.vocabulary_size) if params.vocabulary_size else None,
                       min_freq=int(params.min_freq) if params.min_freq else None,
                       max_seq_length=int(params.max_seq_length) if params.max_seq_length else None, out_folder=params.out_folder,
                       glove_map_file=params.glove_map_file, fast_text_map_file=params.fast_text_map_file,
