@@ -95,8 +95,13 @@ def clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2
     # if running for the first time: you must uncomment all the calls below!!
     print "\n**** Preparing data for preprocessing...."
     # load data
-    
-    df_sarcasm = load_data(root_sarcasm_data_dir, subset_size=subset_size)
+    if os.path.exists(root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file):
+        print("Loading %s"%root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file)
+        df_sarcasm = pd.read_csv(root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file)
+    else:
+        df_sarcasm = load_data(root_sarcasm_data_dir, subset_size=subset_size)
+        if subset_size is not None:
+            df_sarcasm.to_csv(root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file)
     # Firstly, extract test data. Always do this with the same random state.
     train = train_test_split_data(df_sarcasm, test_size, random_state=1234)
     # split rest data into train/val sets
