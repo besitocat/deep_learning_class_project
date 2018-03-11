@@ -125,11 +125,14 @@ def test_with_small_files():
 
 def preprocess_text(df, new_filename, remove_stopwords):
     print "\n**** PREPROCESSING STARTED ...."
+    print("Removing punctuation")
     df['clean_comments'] = df['comment'].apply(lambda x:''.join([\
           re.sub('[^a-z\s]', '', i.lower()) for i in x if i not in string.punctuation]))
+    print("Tokenizing")
     df['clean_comments'] = df['clean_comments'].apply(nltk.word_tokenize)
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
+    print("Removing stopwords")
     if remove_stopwords:
         stopwords = nltk.corpus.stopwords.words('english')
         stopwords.extend(["theres", "would", "could", "ive", "theyre", "dont", "since"])
