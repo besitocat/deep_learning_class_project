@@ -225,11 +225,9 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     print("\n")
     if max_seq_length is not None:
         df_train_data=preprocess.truncate_document(df_train_data, max_length=max_seq_length,
-                                                   updated_file=preprocess.root_sarcasm_data_dir+"max_len_"+str(max_seq_length) +"_"+
-                                                                train_file_cleaned)
+                                                   updated_file=preprocess.root_sarcasm_data_dir+"max_len_"+str(max_seq_length) +"_"+train_file_cleaned)
         df_validate_data=preprocess.truncate_document(df_validate_data, max_length=max_seq_length,
-                                                      updated_file=preprocess.root_sarcasm_data_dir+ "max_len_" + str(max_seq_length)+"_"+
-                                                            + validate_file_cleaned)
+                                                      updated_file=preprocess.root_sarcasm_data_dir+ "max_len_" + str(max_seq_length)+"_"+validate_file_cleaned)
         df_test_data=preprocess.truncate_document(df_test_data, max_length=max_seq_length, updated_file=
                                     preprocess.root_sarcasm_data_dir+"max_len_"+str(max_seq_length)+"_" + test_file_cleaned)
 

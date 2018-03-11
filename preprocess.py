@@ -15,7 +15,8 @@ import re
 import cPickle
 import numpy as np
 from ast import literal_eval
-#from features_methods import transform_to_vec_values
+from langdetect import detect
+from features_methods import transform_to_vec_values
 
 root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv)
                                         #in a parent folder named "sarcasm_data"
@@ -90,17 +91,23 @@ def train_test_split_data(df, size, random_state=1234):
     return train
 
 
-def clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2, val_size=0.1):
+def clean_and_split_data(subset_size=50000, remove_stopwords=True, max_seq_length=None, test_size=0.2, val_size=0.1):
     print "\n********** Preparing data for Sarcasm dataset ******************"
     # if running for the first time: you must uncomment all the calls below!!
     print "\n**** Preparing data for preprocessing...."
     # load data
-    
-    df_sarcasm = load_data(root_sarcasm_data_dir, subset_size=subset_size)
-    # Firstly, extract test data. Always do this with the same random state.
-    train = train_test_split_data(df_sarcasm, test_size, random_state=1234)
-    # split rest data into train/val sets
-    train_val_split_data(train, val_size)
+    if os.path.exists(root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file):
+        print("Loading %s"%root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file)
+        df_sarcasm = pd.read_csv(root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file)
+    else:
+        df_sarcasm = load_data(root_sarcasm_data_dir, subset_size=subset_size)
+        if subset_size is not None:
+            df_sarcasm.to_csv(root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file)
+    if not os.path.exists(root_sarcasm_data_dir + test_file):
+        # Firstly, extract test data. Always do this with the same random state.
+        train = train_test_split_data(df_sarcasm, test_size, random_state=1234)
+        # split rest data into train/val sets
+        train_val_split_data(train, val_size)
 
     df_train = load_file_sarcasm(root_sarcasm_data_dir + train_file)
     df_validate = load_file_sarcasm(root_sarcasm_data_dir + validate_file)
@@ -128,12 +135,15 @@ def preprocess_text(df, new_filename, remove_stopwords):
     print("Removing punctuation")
     df['clean_comments'] = df['comment'].apply(lambda x:''.join([\
           re.sub('[^a-z\s]', '', i.lower()) for i in x if i not in string.punctuation]))
+    
     print("Tokenizing")
     df['clean_comments'] = df['clean_comments'].apply(nltk.word_tokenize)
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
-    print("Removing stopwords")
+    print "searching for English-only comments"
+#    df = search_english_only_comments(df)
     if remove_stopwords:
+        print("Removing stopwords")
         stopwords = nltk.corpus.stopwords.words('english')
         stopwords.extend(["theres", "would", "could", "ive", "theyre", "dont", "since"])
         df['clean_comments']= df['clean_comments'].apply(lambda x: [item for item in x\
@@ -150,6 +160,12 @@ def preprocess_text(df, new_filename, remove_stopwords):
 #    print "comments",df['stemmed_token_comments'].head()
     df.to_csv(root_sarcasm_data_dir + new_filename)
     print "**** PREPROCESSING COMPLETED. New file generated: " + new_filename
+
+def search_english_only_comments(df):
+    df['clean_comments'] = df['clean_comments'].apply(lambda x: [item for item in x if detect(item) == 'en'])
+    print "done"
+    print df.head
+    return df
 
 def truncate_document(df, max_length=100, updated_file=None):
     for i,row in df.iterrows():
