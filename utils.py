@@ -29,9 +29,12 @@ def load_model(ckpt_weights_file, model, learning_rate):
 
 
 def get_file_name(params):
+    suffix=""
+    if params["bidirectional"]:
+        suffix+="_bid"
     return params["model_name"]+"_"+"insize"+"_"+str(params["input_size"])+"_"+"h_act"+"_"+params["hidden_activation"]\
            +"_"+"out_act"+"_"+params["out_activation"]+"_"+"h_dims"+"_"+\
-           str(params["hidden_dims"])+"_"+"layers"+"_"+str(params["layers"])+"_"+"dropouts"+"_"+str(params["dropouts"])
+           str(params["hidden_dims"])+"_"+"layers"+"_"+str(params["layers"])+"_"+"dropouts"+"_"+str(params["dropouts"])+suffix
 
 
 def extract_results_from_history(history):

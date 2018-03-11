@@ -185,10 +185,10 @@ def get_file_names(remove_stopwords,vocabulary_size):
     return train_file_cleaned,validate_file_cleaned,test_file_cleaned,tf_file,bow_vocab_file
 
 
-def save_labels(y_train,y_val,y_test,out_folder):
-    cPickle.dump(y_train, open(os.path.join(out_folder, "y_train.pickle"), 'wb'))
-    cPickle.dump(y_val, open(os.path.join(out_folder, "y_val.pickle"), 'wb'))
-    cPickle.dump(y_test, open(os.path.join(out_folder, "y_test.pickle"), 'wb'))
+def save_labels(y_train,y_val,y_test,out_folder,suffix=""):
+    cPickle.dump(y_train, open(os.path.join(out_folder, "y_train_"+suffix+".pickle"), 'wb'))
+    cPickle.dump(y_val, open(os.path.join(out_folder, "y_val_"+suffix+".pickle"), 'wb'))
+    cPickle.dump(y_test, open(os.path.join(out_folder, "y_test_"+suffix+".pickle"), 'wb'))
     print("Labels shapes: ")
     print("y_train shapes: ", y_train.shape)
     print("y_val shapes: " , y_val.shape)
