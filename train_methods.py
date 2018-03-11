@@ -67,12 +67,16 @@ def train_rnn_model(x_train, y_train, x_val, y_val, params):
 
 
 def train_rnn(params):
+    print("Loading train data...")
     x_train, y_train = utils.load_data(params["x_train_path"], params["y_train_path"])
+    print("Loading val data...")
     x_val, y_val = utils.load_data(params["x_val_path"], params["y_val_path"])
     train_rnn_model(x_train, y_train, x_val, y_val, params)
 
 
 def train_ffn(params):
+    print("Loading train data...")
     x_train, y_train = utils.load_data(params["x_train_path"], params["y_train_path"])
+    print("Loading val data...")
     x_val, y_val = utils.load_data(params["x_val_path"], params["y_val_path"])
     train_ffn_model(x_train, y_train, x_val, y_val, params)
