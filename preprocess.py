@@ -90,7 +90,7 @@ def train_test_split_data(df, size, random_state=1234):
     return train
 
 
-def clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2, val_size=0.1):
+def clean_and_split_data(subset_size=50000, remove_stopwords=True, max_seq_length=None, test_size=0.2, val_size=0.1):
     print "\n********** Preparing data for Sarcasm dataset ******************"
     # if running for the first time: you must uncomment all the calls below!!
     print "\n**** Preparing data for preprocessing...."
@@ -102,10 +102,11 @@ def clean_and_split_data(subset_size=50000, remove_stopwords=True, test_size=0.2
         df_sarcasm = load_data(root_sarcasm_data_dir, subset_size=subset_size)
         if subset_size is not None:
             df_sarcasm.to_csv(root_sarcasm_data_dir + "subset_"+str(subset_size)+ "_" + sarcasm_file)
-    # Firstly, extract test data. Always do this with the same random state.
-    train = train_test_split_data(df_sarcasm, test_size, random_state=1234)
-    # split rest data into train/val sets
-    train_val_split_data(train, val_size)
+    if not os.path.exists(root_sarcasm_data_dir + test_file):
+        # Firstly, extract test data. Always do this with the same random state.
+        train = train_test_split_data(df_sarcasm, test_size, random_state=1234)
+        # split rest data into train/val sets
+        train_val_split_data(train, val_size)
 
     df_train = load_file_sarcasm(root_sarcasm_data_dir + train_file)
     df_validate = load_file_sarcasm(root_sarcasm_data_dir + validate_file)
