@@ -70,6 +70,7 @@ def process_params(params):
     if params["embs_matrix_file"]:
         embs_matrix = cPickle.load(open(params["embs_matrix_file"]))
         params["embs_matrix"]=embs_matrix
+    else:params["embs_matrix"]=None
     # Add error messages for inconsistent parameter combinations.
     if params["layers"]>1 and params["model_type"]=="rnn":
         raise ValueError("We only support RNN with 1 layer.")
