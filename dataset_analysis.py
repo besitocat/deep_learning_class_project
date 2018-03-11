@@ -17,6 +17,7 @@ from collections import Counter
 from ast import literal_eval
 import numpy as np
 import matplotlib.pyplot as plt
+import preprocess as data_prep
 
 root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv)
 
@@ -105,6 +106,7 @@ def dataset_analysis():
     #get_vocabulary_size(df)
     df_train = load_data(root_sarcasm_data_dir, train_file)
     df_train_cleaned_data, df_train_labels = load_preprocessed_file(train_file_cleaned)
+    data_prep.truncate_document(df = df_train_cleaned_data, max_length = 10)
     print "results for traun with stopword removal"
 #    plot_lengths(df_train_cleaned_data, 'clean_comments')
     print "results without stopword removal"
