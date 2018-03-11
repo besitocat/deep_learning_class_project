@@ -72,7 +72,7 @@ def evaluate_rnn(params):
 
 def evaluate_ffn(params):
     x_data, y_data = utils.load_data(params["eval_x_data"], params["eval_y_data"])
-    fnn_model = model.FFNModel(input_size=params["input_size"], output_size=params["output_size"],
+    fnn_model = model.FFNModel(input_size=x_data.shape[1], output_size=params["output_size"],
                                model_name=params["model_name"],
                                hidden_activation=params["hidden_activation"], out_activation=params["out_activation"],
                                hidden_dims=params["hidden_dims"],

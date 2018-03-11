@@ -5,8 +5,11 @@ import os
 import utils
 import time
 
+
 def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, batch_size, learning_rate,
                 loss="binary_crossentropy", early_stopping=True, save_checkpoint=True, verbose=1, ckpt_name_prefix=""):
+    print("Model summary:")
+    print(model.model.summary())
     callbacks = []
     if save_checkpoint:
         # save the model at every epoch. 'val_loss' is the monitored quantity.
@@ -18,7 +21,7 @@ def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, ba
     if early_stopping:
         # Training stops when the monitored quantity (val_loss) stops improving.
         # patience is the number of epochs with no improvement after which training is stopped.
-        stopping = EarlyStopping(monitor="val_loss", min_delta=0, patience=15, verbose=verbose, mode='auto')
+        stopping = EarlyStopping(monitor="val_loss", min_delta=0, patience=10, verbose=verbose, mode='auto')
         callbacks.append(stopping)
     adam = Adagrad(lr=learning_rate, epsilon=1e-08, decay=0.0, clipnorm=1.)
     model.compile(metrics=[], optimizer=adam, loss=loss)
@@ -32,7 +35,7 @@ def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, ba
 
 
 def train_ffn_model(x_train, y_train, x_val, y_val, params):
-    fnn_model = model.FFNModel(input_size=params["input_size"], output_size=params["output_size"],
+    fnn_model = model.FFNModel(input_size=x_train.shape[1], output_size=params["output_size"],
                                model_name=params["model_name"],
                                hidden_activation=params["hidden_activation"], out_activation=params["out_activation"],
                                hidden_dims=params["hidden_dims"],
@@ -54,7 +57,8 @@ def train_rnn_model(x_train, y_train, x_val, y_val, params):
                                hidden_dim=params["hidden_dims"][0], kernel_initializer=params["kernel_initializer"],
                                kernel_regularizer=params["kernel_regularizer"], recurrent_regularizer=params["recurrent_regularizer"],
                                input_dropout=params["input_dropout"], recurrent_dropout=params["recurrent_dropout"],
-                               rnn_unit_type=params["rnn_unit_type"],  bidirectional=params["bidirectional"])
+                               rnn_unit_type=params["rnn_unit_type"],  bidirectional=params["bidirectional"], attention=params["attention"],
+                               embs_matrix=params["embs_matrix"])
     history = train_model(rnn_model, x_train, y_train, out_dir=params["out_dir"], validation_data=(x_val, y_val), save_checkpoint=params["save_checkpoint"],
                           n_epochs=params["n_epochs"], batch_size=params["batch_size"], verbose=params["verbose"],
                           early_stopping=params["early_stopping"], learning_rate=params["learning_rate"], loss=params["loss"],
