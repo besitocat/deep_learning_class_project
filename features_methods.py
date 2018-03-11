@@ -230,7 +230,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     print("Creating one-hot labels...")
 
     y_train, y_val, y_test = create_labels(df_train_targets, df_validate_targets, df_test_targets)
-    preprocess.save_labels(y_train, y_val, y_test, out_folder)
+    preprocess.save_labels(y_train, y_val, y_test, out_folder,suffix=str(subset_size)+"_"+str(vocabulary_size)+"_"+str(min_freq))
 
     # Create a map of words to frequencies based on train data.
     vocab_freqs = words_frequencies(df_train_data['clean_comments'])
