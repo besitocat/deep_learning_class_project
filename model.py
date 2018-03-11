@@ -142,13 +142,13 @@ class RNNModel(BaseRNNModel):
         elif self.rnn_unit_type == 'lstm':
             recurrent_layer = LSTM(self.hidden_dim, activation=self.hidden_activation,
                                    recurrent_regularizer=self.recurrent_regularizer, dropout=self.input_dropout,
-                                   ecurrent_dropout=self.recurrent_dropout,
+                                   recurrent_dropout=self.recurrent_dropout,
                                    kernel_initializer=self.kernel_initializer, name="lstm",
                                    return_sequences=return_sequences)
         elif self.rnn_unit_type == 'gru':
             recurrent_layer = GRU(self.hidden_dim, activation=self.hidden_activation,
                                    recurrent_regularizer=self.recurrent_regularizer, input_dropout=self.input_dropout,
-                                   ecurrent_dropout=self.recurrent_dropout,
+                                   recurrent_dropout=self.recurrent_dropout,
                                    kernel_initializer=self.kernel_initializer, name="gru",
                                   return_sequences=return_sequences)
         else:
