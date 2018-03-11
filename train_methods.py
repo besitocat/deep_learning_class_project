@@ -21,7 +21,7 @@ def train_model(model, x_train, y_train, out_dir,  validation_data, n_epochs, ba
     if early_stopping:
         # Training stops when the monitored quantity (val_loss) stops improving.
         # patience is the number of epochs with no improvement after which training is stopped.
-        stopping = EarlyStopping(monitor="val_loss", min_delta=0, patience=10, verbose=verbose, mode='auto')
+        stopping = EarlyStopping(monitor="val_loss", min_delta=0, patience=6, verbose=verbose, mode='auto')
         callbacks.append(stopping)
     adam = Adagrad(lr=learning_rate, epsilon=1e-08, decay=0.0, clipnorm=1.)
     model.compile(metrics=[], optimizer=adam, loss=loss)
