@@ -3,7 +3,7 @@ import h5py
 import abc
 from keras.models import Model, Sequential
 from keras.layers import Dense, SimpleRNN, LSTM, Input, Embedding, Bidirectional, GRU, Dropout
-
+from attention import Attention
 
 class TrainResults():
     def __init__(self, train_loss=None, val_loss=None, epoch=None):
@@ -89,7 +89,8 @@ class FFNModel(BaseModel):
 class BaseRNNModel(BaseModel):
     def __init__(self, input_size, output_size, max_seq_length, model_name="test", hidden_activation="relu", out_activation="sigmoid",
                  hidden_dim=32, kernel_initializer='uniform', kernel_regularizer=None, recurrent_regularizer=None,
-                 input_dropout=0.0, recurrent_dropout=0.0, rnn_unit_type="rnn",  bidirectional=False, embed_dim=32, emb_trainable=True):
+                 input_dropout=0.0, recurrent_dropout=0.0, rnn_unit_type="rnn",  bidirectional=False, embed_dim=32, emb_trainable=True,
+                 attention=False, embs_matrix = None):
         BaseModel.__init__(self, input_size, output_size, model_name, hidden_activation, out_activation,
                            kernel_initializer, kernel_regularizer)
         self.max_seq_length = max_seq_length
@@ -101,6 +102,9 @@ class BaseRNNModel(BaseModel):
         self.recurrent_regularizer = recurrent_regularizer
         self.input_dropout = input_dropout
         self.recurrent_dropout = recurrent_dropout
+        self.attention = attention
+        self.attention_scores = None
+        self.embs_matrix = embs_matrix
 
 
 class RNNModel(BaseRNNModel):
@@ -108,10 +112,11 @@ class RNNModel(BaseRNNModel):
     def __init__(self, max_seq_length, input_size, output_size, model_name="test", hidden_activation="relu",
                  out_activation="sigmoid", hidden_dim=32, kernel_initializer='uniform', kernel_regularizer=None,
                  recurrent_regularizer=None, input_dropout=0.0, recurrent_dropout=0.0,
-                 rnn_unit_type="rnn", bidirectional=False, embed_dim=32, emb_trainable=True):
+                 rnn_unit_type="rnn", bidirectional=False, embed_dim=32, emb_trainable=True, attention=False, embs_matrix=None):
         BaseRNNModel.__init__(self, input_size, output_size, max_seq_length, model_name, hidden_activation, out_activation,
                               hidden_dim, kernel_initializer, kernel_regularizer, recurrent_regularizer,
-                              input_dropout, recurrent_dropout, rnn_unit_type, bidirectional,embed_dim,emb_trainable)
+                              input_dropout, recurrent_dropout, rnn_unit_type, bidirectional,embed_dim,emb_trainable,attention,
+                              embs_matrix)
         self.build_model()
 
 
@@ -125,21 +130,27 @@ class RNNModel(BaseRNNModel):
 
         # A RNN or a LSTM transforms the input sequences into a single vector (which is the last hidden state of the rnn)
         # This vector has size self.hidden_dim.
+        return_sequences = False
+        if self.attention:
+            return_sequences = True
         if self.rnn_unit_type == 'rnn':
             recurrent_layer = SimpleRNN(self.hidden_dim, activation=self.hidden_activation,
                                         kernel_initializer=self.kernel_initializer, dropout=self.input_dropout,
                                         recurrent_dropout=self.recurrent_dropout,
-                                        recurrent_regularizer=self.recurrent_regularizer, name="rnn")
+                                        recurrent_regularizer=self.recurrent_regularizer, name="rnn",
+                                        return_sequences=return_sequences)
         elif self.rnn_unit_type == 'lstm':
             recurrent_layer = LSTM(self.hidden_dim, activation=self.hidden_activation,
                                    recurrent_regularizer=self.recurrent_regularizer, dropout=self.input_dropout,
                                    ecurrent_dropout=self.recurrent_dropout,
-                                   kernel_initializer=self.kernel_initializer, name="lstm")
+                                   kernel_initializer=self.kernel_initializer, name="lstm",
+                                   return_sequences=return_sequences)
         elif self.rnn_unit_type == 'gru':
             recurrent_layer = GRU(self.hidden_dim, activation=self.hidden_activation,
                                    recurrent_regularizer=self.recurrent_regularizer, input_dropout=self.input_dropout,
                                    ecurrent_dropout=self.recurrent_dropout,
-                                   kernel_initializer=self.kernel_initializer, name="gru")
+                                   kernel_initializer=self.kernel_initializer, name="gru",
+                                  return_sequences=return_sequences)
         else:
             raise ValueError('Unknown model type')
         # For Bidirectional rnn, the forward and backward states will be concatenated. So the output vector
@@ -147,7 +158,9 @@ class RNNModel(BaseRNNModel):
         if self.bidirectional:
             recurrent_output = Bidirectional(recurrent_layer, merge_mode="concat")(embedded_input)
         else: recurrent_output = recurrent_layer(embedded_input)
-
+        if self.attention:
+            attention = Attention(return_attention=True)
+            recurrent_output, self.attention_scores = attention(recurrent_output)
 
         # The output layer takes as input the last hidden state of the rnn and applies self.out_activation function.
         # If self.out_activation is softmax (this is what we need), it produces a probability distribution over classes.
@@ -160,6 +173,12 @@ class RNNModel(BaseRNNModel):
         # eg. [[4], [20]] -> [[0.25, 0.1], [0.6, -0.2]]
         # input_dim is the size of the vocabulary, i.e. the max index that will be turned into a vector.
         # output_dim is the dense vector size.
-        return Embedding(input_dim=self.input_size, output_dim=self.embed_dim, mask_zero=True,
+        emb_dim=self.embed_dim
+        if self.embs_matrix is not None:
+            emb_dim = self.embs_matrix.shape[1]
+            return Embedding(input_dim=self.input_size, output_dim=emb_dim, mask_zero=True,
+                         input_length=self.max_seq_length, weights=[self.embs_matrix],
+                         trainable=self.emb_trainable, name="embeddings")
+        else: return Embedding(input_dim=self.input_size, output_dim=emb_dim, mask_zero=True,
                          input_length=self.max_seq_length,
                          trainable=self.emb_trainable, name="embeddings")

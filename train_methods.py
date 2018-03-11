@@ -50,7 +50,7 @@ def train_ffn_model(x_train, y_train, x_val, y_val, params):
 
 
 def train_rnn_model(x_train, y_train, x_val, y_val, params):
-    rnn_model = model.RNNModel(max_seq_length=params["max_seq_length"], input_size=params["input_size"],
+    rnn_model = model.RNNModel(max_seq_length=x_train.shape[1], input_size=params["input_size"],
                                output_size=params["output_size"], embed_dim=params["embed_dim"],
                                emb_trainable=params["emb_trainable"], model_name=params["model_name"],
                                hidden_activation=params["hidden_activation"], out_activation=params["out_activation"],

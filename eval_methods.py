@@ -44,7 +44,7 @@ def plot_attention_weights(x_data,  attn_weights, vocab, out_folder, sample_size
 
 def evaluate_rnn(params):
     x_data, y_data = utils.load_data(params["eval_x_data"], params["eval_y_data"])
-    rnn_model = model.RNNModel(max_seq_length=params["max_seq_length"], input_size=params["input_size"],
+    rnn_model = model.RNNModel(max_seq_length=x_data.shape[1], input_size=params["input_size"],
                                output_size=params["output_size"], embed_dim=params["embed_dim"],
                                emb_trainable=params["emb_trainable"], model_name=params["model_name"],
                                hidden_activation=params["hidden_activation"], out_activation=params["out_activation"],

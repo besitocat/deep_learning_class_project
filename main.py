@@ -66,12 +66,19 @@ def process_params(params):
     params["hidden_dims"] = [int(token) for token in params["hidden_dims"].split(",")]
     params["dropouts"] = [float(token) for token in params["dropouts"].split(",")]
     params["embs_matrix"] = None
+    import cPickle
     if params["embs_matrix_file"]:
         embs_matrix = cPickle.load(open(params["embs_matrix_file"]))
         params["embs_matrix"]=embs_matrix
     # Add error messages for inconsistent parameter combinations.
     if params["layers"]>1 and params["model_type"]=="rnn":
         raise ValueError("We only support RNN with 1 layer.")
+    import cPickle
+    if params["vocab_file"]:
+        vocab = cPickle.load(open(params["vocab_file"]))
+        if params["model_type"]=="rnn":
+            params["input_size"]=len(vocab)+1
+        else: params["input_size"]=len(vocab)
 
 
 def save_params(params):
