@@ -15,7 +15,8 @@ import re
 import cPickle
 import numpy as np
 from ast import literal_eval
-#from features_methods import transform_to_vec_values
+from langdetect import detect
+from features_methods import transform_to_vec_values
 
 root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv)
                                         #in a parent folder named "sarcasm_data"
@@ -134,10 +135,13 @@ def preprocess_text(df, new_filename, remove_stopwords):
     print("Removing punctuation")
     df['clean_comments'] = df['comment'].apply(lambda x:''.join([\
           re.sub('[^a-z\s]', '', i.lower()) for i in x if i not in string.punctuation]))
+    
     print("Tokenizing")
     df['clean_comments'] = df['clean_comments'].apply(nltk.word_tokenize)
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
+    print "searching for English-only comments"
+#    df = search_english_only_comments(df)
     if remove_stopwords:
         print("Removing stopwords")
         stopwords = nltk.corpus.stopwords.words('english')
@@ -156,6 +160,12 @@ def preprocess_text(df, new_filename, remove_stopwords):
 #    print "comments",df['stemmed_token_comments'].head()
     df.to_csv(root_sarcasm_data_dir + new_filename)
     print "**** PREPROCESSING COMPLETED. New file generated: " + new_filename
+
+def search_english_only_comments(df):
+    df['clean_comments'] = df['clean_comments'].apply(lambda x: [item for item in x if detect(item) == 'en'])
+    print "done"
+    print df.head
+    return df
 
 def truncate_document(df, max_length=100, updated_file=None):
     for i,row in df.iterrows():
