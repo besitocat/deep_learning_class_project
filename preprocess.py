@@ -138,8 +138,8 @@ def preprocess_text(df, new_filename, remove_stopwords):
     df['clean_comments'] = df['clean_comments'].apply(nltk.word_tokenize)
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
-    print("Removing stopwords")
     if remove_stopwords:
+        print("Removing stopwords")
         stopwords = nltk.corpus.stopwords.words('english')
         stopwords.extend(["theres", "would", "could", "ive", "theyre", "dont", "since"])
         df['clean_comments']= df['clean_comments'].apply(lambda x: [item for item in x\
