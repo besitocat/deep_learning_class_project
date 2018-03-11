@@ -9,6 +9,7 @@ from gensim.models.fasttext import FastText
 import itertools
 import nltk
 import numpy as np
+import os
 
 class MeanEmbeddingVectorizer(object):
     def __init__(self, word2vec):
@@ -193,14 +194,14 @@ def create_seq_features(df_train_data, df_validate_data, df_test_data,
         for word,idx in vocab.items():
             embedding_matrix[idx] = embedding_map[word]
     x_train = sequence.pad_sequences(train_data, maxlen=max_seq_length, padding=padding)
-    x_val = sequence.pad_sequences(val_data, maxlen=max_seq_length, padding=padding)
-    x_test = sequence.pad_sequences(test_data, maxlen=max_seq_length, padding=padding)
+    x_val = sequence.pad_sequences(val_data, maxlen=x_train.shape[1], padding=padding)
+    x_test = sequence.pad_sequences(test_data, maxlen=x_train.shape[1], padding=padding)
     return x_train,x_val,x_test,embedding_matrix
 
 
 def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False, out_folder="experiments/data",
                       subset_size=50000, min_freq=None, remove_stopwords=True, fast_text=False, glove=True,
-                      glove_map_file=None, fast_text_map_file=None, seq_features=True):
+                      glove_map_file=None, fast_text_map_file=None, seq_features=True, glove_file="embedding/100d_glove_english_only.txt"):
     noseq_prefix=str(subset_size)+"_"+str(vocabulary_size)+"_"+str(min_freq)+"_"
     seq_prefix = str(subset_size) + "_" + str(vocabulary_size) + "_" + str(min_freq) + "_"+str(max_seq_length) + "_"
     import cPickle
@@ -217,11 +218,17 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         preprocess.root_sarcasm_data_dir + validate_file_cleaned)
     df_test_data, df_test_targets = preprocess.load_preprocessed_file(
         preprocess.root_sarcasm_data_dir + test_file_cleaned)
-    print("Loaded cleaned data:")
+    print("Loaded cleaned data: %s,%s,%s"%(preprocess.root_sarcasm_data_dir + train_file_cleaned,
+                                           preprocess.root_sarcasm_data_dir + validate_file_cleaned,
+                                           preprocess.root_sarcasm_data_dir + test_file_cleaned))
     print("Train: %d, Validation: %d, Test: %d"%(len(df_train_data),len(df_validate_data),len(df_test_data)))
     print("\n")
 
+    df_train_targets['label'] = df_train_targets['label'].apply(lambda x: x-1.0)
+    df_validate_targets['label'] = df_validate_targets['label'].apply(lambda x: x - 1.0)
+    df_test_targets['label'] = df_test_targets['label'].apply(lambda x: x - 1.0)
     print("Creating one-hot labels...")
+
     y_train, y_val, y_test = create_labels(df_train_targets, df_validate_targets, df_test_targets)
     preprocess.save_labels(y_train, y_val, y_test, out_folder)
 
@@ -237,9 +244,9 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     glove_map=None
     if glove:
         if glove_map_file is None:
-            glove_map = create_glove_embeddings(vocab_freqs.keys(), "embedding/100d_glove_english_only.txt")
+            glove_map = create_glove_embeddings(vocab_freqs.keys(), glove_file)
             print("Saving glove")
-            cPickle.dump(glove_map, open("experiments/data/glove_map"+str(subset_size)+".pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(glove_map, open(os.path.join(out_folder,"glove_map"+str(subset_size)+".pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         else:
             glove_map = cPickle.load(open(glove_map_file))
         print("Glove map of size: %d"%len(glove_map))
@@ -248,7 +255,7 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         if fast_text_map_file is None:
             fast_text_map = create_fasttext_embeddings(vocab_freqs.keys(), "embedding/wiki.simple")
             print("Saving fasttext")
-            cPickle.dump(fast_text_map, open("experiments/data/fast_text_map"+str(subset_size)+".pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(fast_text_map, open(os.path.join(out_folder,"fast_text_map"+str(subset_size)+".pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         else:
             fast_text_map = cPickle.load(open(fast_text_map_file))
         print("Fasttext map of size: %d" % len(fast_text_map))
@@ -259,17 +266,17 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     vocab_glove = None
     if glove:
         vocab_glove = build_embeddings_vocabulary(vocab_freqs, embeddings_map=glove_map, min_freq=min_freq, max_features=vocabulary_size)
-        cPickle.dump(vocab_glove,open("experiments/data/"+noseq_prefix+"vocab_glove.pickle","wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump(vocab_glove,open(os.path.join(out_folder,noseq_prefix+"vocab_glove.pickle"),"wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         print("Vocab size when glove embeddings: %d"%len(vocab_glove))
     # Fasttext vocabulary. Careful! It is different thatn Glove vocab, cause with fasttext we have an embeddings for all train words.
     vocab_fasttext = None
     if fast_text:
         vocab_fasttext = build_embeddings_vocabulary(vocab_freqs, embeddings_map=fast_text_map, min_freq=min_freq, max_features=vocabulary_size)
-        cPickle.dump(vocab_fasttext, open("experiments/data/"+noseq_prefix+"vocab_fasttext.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump(vocab_fasttext, open(os.path.join(out_folder,noseq_prefix+"vocab_fasttext.pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
         print("Vocab size when fasttext embeddings: %d" % len(vocab_fasttext))
     # Full vocabulary. We select max_features words. We DO NOT remove words that do not appear to some embeddings matrix.
     vocab_full = build_vocabulary(vocab_freqs, embeddings_map=None, min_freq=min_freq, max_features=vocabulary_size)
-    cPickle.dump(vocab_full, open("experiments/data/vocab_full.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+    cPickle.dump(vocab_full, open(os.path.join(out_folder,"vocab_full.pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
     print("Full vocab size: %d" % len(vocab_full))
     print("\n")
 
@@ -301,6 +308,9 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         # create and save sequential features
         print("Creating Sequential features:")
         extend_vocab_for_seq(vocab_full)
+        cPickle.dump(vocab_full,
+                     open(os.path.join(out_folder,"sequential/" + seq_prefix + "vocab_full_seq.pickle"), "wb"),
+                     protocol=cPickle.HIGHEST_PROTOCOL)
         x_train, x_val, x_test, embedding_matrix = \
             create_seq_features(df_train_data, df_validate_data,
                                 df_test_data, 'clean_comments', vocab=vocab_full,
@@ -309,24 +319,24 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
         if glove:
             vocab_glove_seq={word: i for i, word in enumerate(vocab_glove)}
             extend_vocab_for_seq(vocab_glove_seq)
-            cPickle.dump(vocab_glove_seq, open("experiments/data/sequential/"+seq_prefix+"vocab_glove_seq.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(vocab_glove_seq, open(os.path.join(out_folder,"sequential/"+seq_prefix+"vocab_glove_seq.pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
             x_train, x_val,x_test,embedding_matrix = \
                 create_seq_features(df_train_data, df_validate_data,
                                     df_test_data, 'clean_comments', vocab=vocab_glove_seq,
                                     max_seq_length=max_seq_length, padding='post', embedding_map=vocab_glove)
             preprocess.save_features(x_train, x_val, x_test, out_folder+"/sequential/", suffix=seq_prefix+"glove_seq")
-            cPickle.dump(embedding_matrix, open("experiments/data/sequential/"+seq_prefix+"glove_matrix.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(embedding_matrix, open(os.path.join(out_folder,"sequential/"+seq_prefix+"glove_matrix.pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
             print("Glove matrix shape: ",embedding_matrix.shape)
         if fast_text:
             vocab_fasttext_seq = {word: i for i, word in enumerate(vocab_fasttext)}
             extend_vocab_for_seq(vocab_fasttext_seq)
-            cPickle.dump(vocab_fasttext_seq, open("experiments/data/sequential/"+seq_prefix+"vocab_fasttext_seq.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(vocab_fasttext_seq, open(os.path.join(out_folder,"sequential/"+seq_prefix+"vocab_fasttext_seq.pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
             x_train, x_val, x_test, embedding_matrix = \
                 create_seq_features(df_train_data, df_validate_data,
                                     df_test_data, 'clean_comments', vocab={word:i for i,word in enumerate(vocab_fasttext)},
                                     max_seq_length=max_seq_length, padding='post', embedding_map=vocab_fasttext)
             preprocess.save_features(x_train, x_val, x_test, out_folder+"/sequential/", suffix=seq_prefix+"fast_text_seq")
-            cPickle.dump(embedding_matrix, open("experiments/data/sequential/"+seq_prefix+"fasttext_matrix.pickle", "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(embedding_matrix, open(os.path.join(out_folder,"sequential/"+seq_prefix+"fasttext_matrix.pickle"), "wb"), protocol=cPickle.HIGHEST_PROTOCOL)
             print("Fasttext matrix shape: ", embedding_matrix.shape)
             print("\n")
             print("Done creating features.")
@@ -344,26 +354,29 @@ def add_arguments(parser):
     parser.add_argument("--clean_data", type="bool", default=False)
     parser.add_argument("--subset_size", type=str, default=None)
     parser.add_argument("--remove_stopwords", type="bool", default=False)
-    parser.add_argument("--vocabulary_size", type=int, default=10000)
+    parser.add_argument("--vocabulary_size", type=str, default=None)
     parser.add_argument("--min_freq", type=str, default=None)
-    parser.add_argument("--max_seq_length", type=int, default=150)
+    parser.add_argument("--max_seq_length", type=str, default=None)
     parser.add_argument("--out_folder", type=str, default=None)
     parser.add_argument("--glove", type="bool", default=True)
     parser.add_argument("--fast_text", type="bool", default=True)
     parser.add_argument("--fast_text_map_file", type=str, default=None)
     parser.add_argument("--glove_map_file", type=str, default=None)
     parser.add_argument("--seq_features", type="bool", default=True)
-
+    parser.add_argument("--is_yelp", type="bool", default=True)
+    parser.add_argument("--glove_file", type=str, default="embedding/100d_glove_english_only.txt")
 def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
     params, unparsed = parser.parse_known_args()
+    if params.is_yelp:
+        preprocess.prepare_for_yelp(is_yelp=True)
     features_pipeline(clean_data=params.clean_data, subset_size=int(params.subset_size) if params.subset_size else None,
-                      remove_stopwords=params.remove_stopwords , vocabulary_size=params.vocabulary_size,
+                      remove_stopwords=params.remove_stopwords , vocabulary_size=int(params.vocabulary_size) if params.vocabulary_size else None,
                       min_freq=int(params.min_freq) if params.min_freq else None,
-                      max_seq_length=params.max_seq_length, out_folder=params.out_folder,
+                      max_seq_length=int(params.max_seq_length) if params.max_seq_length else None, out_folder=params.out_folder,
                       glove_map_file=params.glove_map_file, fast_text_map_file=params.fast_text_map_file,
-                      glove=params.glove, fast_text=params.fast_text, seq_features=params.seq_features)
+                      glove=params.glove, fast_text=params.fast_text, seq_features=params.seq_features, glove_file=params.glove_file)
 
 if __name__ == '__main__':
     main()

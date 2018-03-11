@@ -65,6 +65,7 @@ def load_data(root_sarcasm, subset_size=None):
     if not os.path.exists(root_sarcasm):
         os.makedirs(root_sarcasm)
     df = pd.read_csv(root_sarcasm + sarcasm_file)
+    print("Total loaded data: %d"%len(df))
     if subset_size is not None:
         df=df.sample(n=subset_size)
     return df
