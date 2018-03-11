@@ -153,7 +153,8 @@ def truncate_document(df, max_length=100, updated_file=None):
           cur_length = len(row['clean_comments'])
           if cur_length>max_length:
               df.at[i,'clean_comments'] = row['clean_comments'][:max_length]
-    df.to_csv(root_sarcasm_data_dir + updated_file)        
+    if updated_file:
+        df.to_csv(root_sarcasm_data_dir + updated_file)        
     return df
 
 def get_vocab_filename(remove_stopwords, vocabulary_size):
