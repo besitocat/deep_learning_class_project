@@ -151,6 +151,14 @@ def preprocess_text(df, new_filename, remove_stopwords):
     df.to_csv(root_sarcasm_data_dir + new_filename)
     print "**** PREPROCESSING COMPLETED. New file generated: " + new_filename
 
+def truncate_document(df, max_length=100, updated_file=None):
+    for i,row in df.iterrows():
+          cur_length = len(row['clean_comments'])
+          if cur_length>max_length:
+              df.at[i,'clean_comments'] = row['clean_comments'][:max_length]
+    if updated_file:
+        df.to_csv(root_sarcasm_data_dir + updated_file)        
+    return df
 
 def get_vocab_filename(remove_stopwords, vocabulary_size):
     if not remove_stopwords:

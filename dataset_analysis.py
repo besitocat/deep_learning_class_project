@@ -17,18 +17,20 @@ from collections import Counter
 from ast import literal_eval
 import numpy as np
 import matplotlib.pyplot as plt
+import preprocess as data_prep
 
-root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv)
+root_sarcasm_data_dir = "../yelp_data/" #put the data (train-balanced-sarcasm.csv)
 
                                         #in a parent folder named "sarcasm_data"
 sarcasm_file = "train-balanced-sarcasm.csv"
-train_file = 'sarcasm_train.csv'
+train_file = 'train.csv'
 train_with_stopwords_file = 'with_stopwords_train_cleaned.csv'
-test_file = 'sarcasm_test.csv'
-validate_file = 'sarcasm_validate.csv'
+test_file = 'test.csv'
+validate_file = 'validate.csv'
 train_file_cleaned =  "train_cleaned.csv"
 validate_file_cleaned = "validate_cleaned.csv"
 test_file_cleaned = "test_cleaned.csv"
+yelp_file = "review_sampled.csv"
 
 def load_data(root_sarcasm, sarcasm_file, subset_size=None):
     print "\n**** Loading data****"
@@ -100,11 +102,12 @@ def get_vocabulary_size(df):
 
 
 def dataset_analysis():
-    df = load_data(root_sarcasm_data_dir, sarcasm_file)
+    df = load_data(root_sarcasm_data_dir, yelp_file)
     print "total comments:", df.shape
     #get_vocabulary_size(df)
     df_train = load_data(root_sarcasm_data_dir, train_file)
     df_train_cleaned_data, df_train_labels = load_preprocessed_file(train_file_cleaned)
+    data_prep.truncate_document(df = df_train_cleaned_data, max_length = 10)
     print "results for traun with stopword removal"
 #    plot_lengths(df_train_cleaned_data, 'clean_comments')
     print "results without stopword removal"
