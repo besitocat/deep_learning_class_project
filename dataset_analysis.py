@@ -19,12 +19,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import preprocess as data_prep
 
-root_sarcasm_data_dir = "../yelp_data/" #put the data (train-balanced-sarcasm.csv)
+root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv)
 
                                         #in a parent folder named "sarcasm_data"
 sarcasm_file = "train-balanced-sarcasm.csv"
 train_file = 'train.csv'
 train_with_stopwords_file = 'with_stopwords_train_cleaned.csv'
+test_with_stopwords_file = 'with_stopwords_test_cleaned.csv'
+val_with_stopwords_file = 'with_stopwords_val_cleaned.csv'
 test_file = 'test.csv'
 validate_file = 'validate.csv'
 train_file_cleaned =  "train_cleaned.csv"
@@ -62,7 +64,7 @@ def plot_lengths(df, column):
     x = list(range(0,len(lengths)))
 #    plt.plot(lengths,x)
     df = pd.DataFrame(lengths, columns=['length'])
-    bins = range(0,100,10)
+    bins = range(0,200,10)
     plt.hist(lengths, bins=bins)
     plt.legend()
     
@@ -102,22 +104,28 @@ def get_vocabulary_size(df):
 
 
 def dataset_analysis():
-    df = load_data(root_sarcasm_data_dir, yelp_file)
+    df = load_data(root_sarcasm_data_dir, sarcasm_file)
     print "total comments:", df.shape
     #get_vocabulary_size(df)
-    df_train = load_data(root_sarcasm_data_dir, train_file)
+#    df_train = load_data(root_sarcasm_data_dir, train_file)
     df_train_cleaned_data, df_train_labels = load_preprocessed_file(train_file_cleaned)
-    data_prep.truncate_document(df = df_train_cleaned_data, max_length = 10)
-    print "results for traun with stopword removal"
-#    plot_lengths(df_train_cleaned_data, 'clean_comments')
-    print "results without stopword removal"
-    df_train_cleaned_with_stop_data, df_train_stop_labels = load_preprocessed_file(train_with_stopwords_file)
-    plot_lengths(df_train_cleaned_with_stop_data, 'clean_comments')
+#    df_trunc = data_prep.truncate_document(df = df_train_cleaned_data, max_length = 120)
+    print "results for train with stopword removal"
+    plot_lengths(df_train_cleaned_data, 'clean_comments')
     
-#    df_val = load_data(root_sarcasm_data_dir, validate_file)
-#    df_validate_cleaned_data, df_val_labels = load_preprocessed_file(df_val)
-#    print "results for validate with stopword removal"
-#    plot_lengths(df_validate_cleaned_data, 'clean_comments')
+    df_test_cleaned_data, df_train_labels = load_preprocessed_file(test_file_cleaned)
+#    df_trunc = data_prep.truncate_document(df = df_train_cleaned_data, max_length = 120)
+    print "results for train with stopword removal"
+    plot_lengths(df_test_cleaned_data, 'clean_comments')
+    
+    
+#    print "results without stopword removal"
+#    df_train_cleaned_with_stop_data, df_train_stop_labels = load_preprocessed_file(train_with_stopwords_file)
+#    plot_lengths(df_train_cleaned_with_stop_data, 'clean_comments')
+    
+    df_validate_cleaned_data, df_val_labels = load_preprocessed_file(validate_file_cleaned)
+    print "results for validate with stopword removal"
+    plot_lengths(df_validate_cleaned_data, 'clean_comments')
     
 def main():
     dataset_analysis()
