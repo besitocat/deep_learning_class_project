@@ -32,6 +32,8 @@ def get_file_name(params):
     suffix=""
     if params["bidirectional"]:
         suffix+="_bid"
+    if params["attention"]:
+        suffix+="_attn"
     return params["model_name"]+"_"+"insize"+"_"+str(params["input_size"])+"_"+"h_act"+"_"+params["hidden_activation"]\
            +"_"+"out_act"+"_"+params["out_activation"]+"_"+"h_dims"+"_"+\
            str(params["hidden_dims"])+"_"+"layers"+"_"+str(params["layers"])+"_"+"dropouts"+"_"+str(params["dropouts"])+suffix
