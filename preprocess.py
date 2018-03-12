@@ -16,7 +16,6 @@ import cPickle
 import numpy as np
 from ast import literal_eval
 from langdetect import detect
-from features_methods import transform_to_vec_values
 
 root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm.csv)
                                         #in a parent folder named "sarcasm_data"
@@ -129,6 +128,20 @@ def test_with_small_files():
     y_val = df_validate_targets['label'].values
     return bag_of_words, vec_model, y_val
 
+def remove_stopwords(df, filename):
+    print("Removing stopwords")
+    stopwords = nltk.corpus.stopwords.words('english')
+    stopwords.extend(["theres", "would", "could", "ive", "theyre", "dont", "since"])
+    df['clean_comments'] = df['clean_comments'].apply(lambda x: [item for item in x \
+                                                                 if item not in stopwords])
+    df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c == [])
+    df.drop(df[df['empty_list_comments'] == True].index, inplace=True)
+    print "\ncomments with stopwords removed:" + str(remove_stopwords) + "\n", df['clean_comments'].head()
+    print "shape:", df['clean_comments'].shape
+    df.to_csv(root_sarcasm_data_dir + filename)
+    print "**** PREPROCESSING COMPLETED. New file generated: " + filename
+
+
 
 def preprocess_text(df, new_filename, remove_stopwords):
     print "\n**** PREPROCESSING STARTED ...."
@@ -140,7 +153,7 @@ def preprocess_text(df, new_filename, remove_stopwords):
     df['clean_comments'] = df['clean_comments'].apply(nltk.word_tokenize)
     df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
     df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
-    print "searching for English-only comments"
+    # print "searching for English-only comments"
 #    df = search_english_only_comments(df)
     if remove_stopwords:
         print("Removing stopwords")
@@ -225,9 +238,36 @@ def save_features(x_train,x_val,x_test,out_folder,suffix):
     print("x_val shapes: " , x_val.shape)
     print("x_test shapes: " , x_test.shape)
     print("\n")
-    
-def main():
+
+def helper(subset_size=10000):
+    filename="all_data"
     prepare_for_yelp(is_yelp=True)
+    df = load_data(root_sarcasm_data_dir, subset_size=subset_size)
+    if subset_size is not None:
+        df=df.sample(n=subset_size)
+    df.to_csv(root_sarcasm_data_dir + "subset_" + str(subset_size) + "_" + sarcasm_file)
+    df_new = load_file_sarcasm(root_sarcasm_data_dir + "subset_" + str(subset_size) + "_" + sarcasm_file)
+
+    preprocess_text(df_new, filename, remove_stopwords=False)
+    df_new,_ = load_preprocessed_file(
+        root_sarcasm_data_dir +"with_stopwords_" + filename)
+    df_new_tr = truncate_document(df_new, max_length=300,updated_file=root_sarcasm_data_dir + "max_len_" + str(300) + "_" + filename)
+
+    train = train_test_split_data(df_new_tr, 0.2, random_state=1234)
+    # split rest data into train/val sets
+    train_val_split_data(train, val_size=0.1)
+
+    df_train,_ = load_preprocessed_file(root_sarcasm_data_dir + train_file)
+    df_validate,_ = load_preprocessed_file(root_sarcasm_data_dir + validate_file)
+    df_test,_ = load_preprocessed_file(test_file)
+
+
+    remove_stopwords(df_train, "max_len_" + str(300) + "_" + "train" + "nostopwords")
+    remove_stopwords(df_validate, "max_len_" + str(300) + "_" + "val" + "nostopwords")
+    remove_stopwords(df_test, "max_len_" + str(300) + "_" + "test" + "nostopwords")
+
+def main():
+    helper(subset_size=1000)
     
 if __name__ == '__main__':
     main()

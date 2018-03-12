@@ -36,6 +36,9 @@ def create_glove_embeddings(words, embeddings_path):
     for w in words:
         if w in word2vec.vocab:
             glove_word_dict[w] = word2vec[w]
+        else:
+            pass
+            # print(w)
     print "total words not found in Glove: %d out of %d"%(len(words) - len(glove_word_dict),len(words))
     return glove_word_dict
 
