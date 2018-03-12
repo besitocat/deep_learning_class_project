@@ -202,9 +202,10 @@ def create_seq_features(df_train_data, df_validate_data, df_test_data,
     return x_train,x_val,x_test,embedding_matrix
 
 
-def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False, out_folder="experiments/data",
+def features_pipeline(train_file, val_file, test_file, vocabulary_size=5000, max_seq_length=150, clean_data=False, out_folder="experiments/data",
                       subset_size=50000, min_freq=None, remove_stopwords=True, fast_text=False, glove=True,
-                      glove_map_file=None, fast_text_map_file=None, seq_features=True, glove_file="embedding/100d_glove_english_only.txt"):
+                      glove_map_file=None, fast_text_map_file=None, seq_features=True, glove_file="embedding/100d_glove_english_only.txt",
+                      ):
     noseq_prefix=str(subset_size)+"_"+str(vocabulary_size)+"_"+str(min_freq)+"_"
     seq_prefix = str(subset_size) + "_" + str(vocabulary_size) + "_" + str(min_freq) + "_"+str(max_seq_length) + "_"
     import cPickle
@@ -212,28 +213,33 @@ def features_pipeline(vocabulary_size=5000, max_seq_length=150, clean_data=False
     if clean_data:
         preprocess.clean_and_split_data(subset_size=subset_size, remove_stopwords=remove_stopwords, test_size=0.2, val_size=0.1)
 
-    # load cleaned dfs
-    train_file_cleaned, validate_file_cleaned, test_file_cleaned, tf_file, bow_vocab_file = preprocess.get_file_names(
-        remove_stopwords, vocabulary_size)
+    # # load cleaned dfs
+    # train_file_cleaned, validate_file_cleaned, test_file_cleaned, tf_file, bow_vocab_file = preprocess.get_file_names(
+    #     remove_stopwords, vocabulary_size)
+    # df_train_data, df_train_targets = preprocess.load_preprocessed_file(
+    #     preprocess.root_sarcasm_data_dir + train_file_cleaned)
+    # df_validate_data, df_validate_targets = preprocess.load_preprocessed_file(
+    #     preprocess.root_sarcasm_data_dir + validate_file_cleaned)
+    # df_test_data, df_test_targets = preprocess.load_preprocessed_file(
+    #     preprocess.root_sarcasm_data_dir + test_file_cleaned)
+    # print("Loaded cleaned data: %s,%s,%s"%(preprocess.root_sarcasm_data_dir + train_file_cleaned,
+    #                                        preprocess.root_sarcasm_data_dir + validate_file_cleaned,
+    #                                        preprocess.root_sarcasm_data_dir + test_file_cleaned))
+    # print("Train: %d, Validation: %d, Test: %d"%(len(df_train_data),len(df_validate_data),len(df_test_data)))
+    # print("\n")
+    # if max_seq_length is not None:
+    #     df_train_data=preprocess.truncate_document(df_train_data, max_length=max_seq_length,
+    #                                                updated_file=preprocess.root_sarcasm_data_dir+"max_len_"+str(max_seq_length) +"_"+train_file_cleaned)
+    #     df_validate_data=preprocess.truncate_document(df_validate_data, max_length=max_seq_length,
+    #                                                   updated_file=preprocess.root_sarcasm_data_dir+ "max_len_" + str(max_seq_length)+"_"+validate_file_cleaned)
+    #     df_test_data=preprocess.truncate_document(df_test_data, max_length=max_seq_length, updated_file=
+    #                                 preprocess.root_sarcasm_data_dir+"max_len_"+str(max_seq_length)+"_" + test_file_cleaned)
     df_train_data, df_train_targets = preprocess.load_preprocessed_file(
-        preprocess.root_sarcasm_data_dir + train_file_cleaned)
+        preprocess.root_sarcasm_data_dir + train_file)
     df_validate_data, df_validate_targets = preprocess.load_preprocessed_file(
-        preprocess.root_sarcasm_data_dir + validate_file_cleaned)
+        preprocess.root_sarcasm_data_dir + val_file)
     df_test_data, df_test_targets = preprocess.load_preprocessed_file(
-        preprocess.root_sarcasm_data_dir + test_file_cleaned)
-    print("Loaded cleaned data: %s,%s,%s"%(preprocess.root_sarcasm_data_dir + train_file_cleaned,
-                                           preprocess.root_sarcasm_data_dir + validate_file_cleaned,
-                                           preprocess.root_sarcasm_data_dir + test_file_cleaned))
-    print("Train: %d, Validation: %d, Test: %d"%(len(df_train_data),len(df_validate_data),len(df_test_data)))
-    print("\n")
-    if max_seq_length is not None:
-        df_train_data=preprocess.truncate_document(df_train_data, max_length=max_seq_length,
-                                                   updated_file=preprocess.root_sarcasm_data_dir+"max_len_"+str(max_seq_length) +"_"+train_file_cleaned)
-        df_validate_data=preprocess.truncate_document(df_validate_data, max_length=max_seq_length,
-                                                      updated_file=preprocess.root_sarcasm_data_dir+ "max_len_" + str(max_seq_length)+"_"+validate_file_cleaned)
-        df_test_data=preprocess.truncate_document(df_test_data, max_length=max_seq_length, updated_file=
-                                    preprocess.root_sarcasm_data_dir+"max_len_"+str(max_seq_length)+"_" + test_file_cleaned)
-
+        preprocess.root_sarcasm_data_dir + test_file)
 
     df_train_targets['label'] = df_train_targets['label'].apply(lambda x: x-1.0)
     df_validate_targets['label'] = df_validate_targets['label'].apply(lambda x: x - 1.0)
@@ -376,13 +382,18 @@ def add_arguments(parser):
     parser.add_argument("--seq_features", type="bool", default=True)
     parser.add_argument("--is_yelp", type="bool", default=True)
     parser.add_argument("--glove_file", type=str, default="embedding/100d_glove_english_only.txt")
+
+    parser.add_argument("--train_file", type=str, default=None)
+    parser.add_argument("--val_file", type=str, default=None)
+    parser.add_argument("--test_file", type=str, default=None)
 def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
     params, unparsed = parser.parse_known_args()
     if params.is_yelp:
         preprocess.prepare_for_yelp(is_yelp=True)
-    features_pipeline(clean_data=params.clean_data, subset_size=int(params.subset_size) if params.subset_size else None,
+    features_pipeline(train_file=params.train_file,val_file=params.val_file,test_file=params.test_file,
+                      clean_data=params.clean_data, subset_size=int(params.subset_size) if params.subset_size else None,
                       remove_stopwords=params.remove_stopwords , vocabulary_size=int(params.vocabulary_size) if params.vocabulary_size else None,
                       min_freq=int(params.min_freq) if params.min_freq else None,
                       max_seq_length=int(params.max_seq_length) if params.max_seq_length else None, out_folder=params.out_folder,
