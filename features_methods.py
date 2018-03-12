@@ -235,11 +235,11 @@ def features_pipeline(train_file, val_file, test_file, vocabulary_size=5000, max
     #     df_test_data=preprocess.truncate_document(df_test_data, max_length=max_seq_length, updated_file=
     #                                 preprocess.root_sarcasm_data_dir+"max_len_"+str(max_seq_length)+"_" + test_file_cleaned)
     df_train_data, df_train_targets = preprocess.load_preprocessed_file(
-        preprocess.root_sarcasm_data_dir + train_file)
+        train_file)
     df_validate_data, df_validate_targets = preprocess.load_preprocessed_file(
-        preprocess.root_sarcasm_data_dir + val_file)
+        val_file)
     df_test_data, df_test_targets = preprocess.load_preprocessed_file(
-        preprocess.root_sarcasm_data_dir + test_file)
+        test_file)
 
     df_train_targets['label'] = df_train_targets['label'].apply(lambda x: x-1.0)
     df_validate_targets['label'] = df_validate_targets['label'].apply(lambda x: x - 1.0)
