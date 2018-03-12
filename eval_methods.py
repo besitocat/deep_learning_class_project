@@ -55,10 +55,10 @@ def evaluate_rnn(params):
                                attention=params["attention"], embs_matrix=params["embs_matrix"])
     utils.load_model(params["eval_weights_ckpt"], rnn_model, params["learning_rate"])
     print("Model from checkpoint %s was loaded." % params["eval_weights_ckpt"])
-    if y_data is not None:
-        metrics_names, scores = rnn_model.evaluate(x_data, y_data, batch_size=params["batch_size"], verbose=params["verbose"])
-        loss = scores[0]
-        print("Evaluation loss: %.3f"%loss)
+    # if y_data is not None:
+    #     metrics_names, scores = rnn_model.evaluate(x_data, y_data, batch_size=params["batch_size"], verbose=params["verbose"])
+    #     loss = scores[0]
+    #     print("Evaluation loss: %.3f"%loss)
     if params["attention"]:
         attention_weights=get_attention_weights(rnn_model, x_data)
         print("Attention weights shape: ",attention_weights.shape)
