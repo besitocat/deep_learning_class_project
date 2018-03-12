@@ -21,9 +21,9 @@ root_sarcasm_data_dir = "../sarcasm_data/" #put the data (train-balanced-sarcasm
                                         #in a parent folder named "sarcasm_data"
 root_sarcasm_models_dir = "../sarcasm_models/"
 sarcasm_file = "train-balanced-sarcasm.csv"
-train_file = 'train.csv'
-test_file = 'test.csv'
-validate_file = 'validate.csv'
+train_file = 'nostopwords_train.csv'
+test_file = 'nostopwords_test.csv'
+validate_file = 'nostopwords_validate.csv'
 train_file_cleaned =  "train_cleaned.csv"
 validate_file_cleaned = "validate_cleaned.csv"
 test_file_cleaned = "test_cleaned.csv"
