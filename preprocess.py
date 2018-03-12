@@ -29,7 +29,7 @@ validate_file_cleaned = "validate_cleaned.csv"
 test_file_cleaned = "test_cleaned.csv"
 root_yelp_data_dir = "../yelp_data/" #put the data (review.csv)
                                         #in a parent folder named "yelp_data"
-yelp_file = "review_sampled.csv"
+yelp_file = "subset_20000_review_sampled.csv"
 
 def prepare_for_yelp(is_yelp=True):
     if is_yelp:
@@ -75,8 +75,10 @@ def train_val_split_data(df, val_size, random_state=None):
     # here we may need to create multiple splits if we do cross-validation.
     print "\n**** Splitting data into train and validate sets ****"
     train, validate = train_test_split(df, test_size=val_size, random_state=random_state)
+    print "train:", train['clean_comments'].head
     train.to_csv(root_sarcasm_data_dir+train_file, sep=',')
     validate.to_csv(root_sarcasm_data_dir+validate_file, sep=',')
+    print "\nvalidate:", validate['clean_comments'].head
     print "sizes:", "train:", len(train), ", validate:", len(validate)
     print "**** writing splitted files is COMPLETE ****"
 
@@ -85,6 +87,8 @@ def train_test_split_data(df, size, random_state=1234):
     print "\n**** Extracting test set. ****"
     train, test = train_test_split(df, test_size=size, random_state=random_state)
     test.to_csv(root_sarcasm_data_dir + test_file, sep=',')
+    print "test:"
+    print test['clean_comments'].head
     print "sizes:", "test:", len(test)
     #return the remaining dataset after extracting the test set.
     return train
@@ -173,7 +177,45 @@ def preprocess_text(df, new_filename, remove_stopwords):
 #    print "comments",df['stemmed_token_comments'].head()
     df.to_csv(root_sarcasm_data_dir + new_filename)
     print "**** PREPROCESSING COMPLETED. New file generated: " + new_filename
+    
+    
+def preprocess_text_new(df, truncate_length):
+    print "\n**** PREPROCESSING STARTED ...."
+    print("Removing punctuation")
+    df['clean_comments'] = df['comment'].apply(lambda x:''.join([\
+          re.sub('[^a-z\s]', '', i.lower()) for i in x if i not in string.punctuation]))
+    
+    print("Tokenizing")
+    df['clean_comments'] = df['clean_comments'].apply(nltk.word_tokenize)
+    df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
+    df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
+    # print "searching for English-only comments"
+#    df = search_english_only_comments(df)
+    print "Truncating...."
+    df = truncate_document(df, truncate_length)
+    df.to_csv(root_sarcasm_data_dir + "sample_review_trunc.csv")
+    return df
 
+def remove_stopwords_function(df, new_filename):
+    print("Removing stopwords")
+    df_tmp = df
+    stopwords = nltk.corpus.stopwords.words('english')
+    stopwords.extend(["theres", "would", "could", "ive", "theyre", "dont", "since"])
+    df_tmp['clean_comments']= df_tmp['clean_comments'].apply(lambda x: [item for item in x if item not in stopwords])
+    print "shape:", df_tmp['clean_comments'].shape
+    print "\n",df_tmp['clean_comments'].head()
+    df_tmp.to_csv(root_sarcasm_data_dir + new_filename)
+    print "New file generated: " + new_filename
+    new_filename = "with_stopwords_" + new_filename
+    df['empty_list_comments'] = df['clean_comments'].apply(lambda c: c==[])
+    df.drop(df[df['empty_list_comments']  == True].index, inplace=True)
+    print "\n",df['clean_comments'].head()
+    print "shape:", df['clean_comments'].shape
+    df.to_csv(root_sarcasm_data_dir + new_filename)
+    print "New file generated: " + new_filename
+    print "**** PREPROCESSING COMPLETED." 
+    
+    
 def search_english_only_comments(df):
     df['clean_comments'] = df['clean_comments'].apply(lambda x: [item for item in x if detect(item) == 'en'])
     print "done"
@@ -239,16 +281,29 @@ def save_features(x_train,x_val,x_test,out_folder,suffix):
     print("x_test shapes: " , x_test.shape)
     print("\n")
 
+
+def split_before_stopwords(filename, test_size=0.2, val_size=0.1):
+    # load data
+    print "splitting data into test train validate"
+    if os.path.exists(root_sarcasm_data_dir + filename):
+        print("Loading %s"%root_sarcasm_data_dir + filename)
+    df_sarcasm = pd.read_csv(root_sarcasm_data_dir + filename)
+        # Firstly, extract test data. Always do this with the same random state.
+    train_df = train_test_split_data(df_sarcasm, test_size, random_state=1234)
+        # split rest data into train/val sets
+#    print train_df['clean_comments'].head
+    train_val_split_data(train_df, val_size)
+
 def helper(subset_size=10000):
     filename="all_data"
     prepare_for_yelp(is_yelp=True)
     df = load_data(root_sarcasm_data_dir, subset_size=subset_size)
-    if subset_size is not None:
-        df=df.sample(n=subset_size)
-    df.to_csv(root_sarcasm_data_dir + "subset_" + str(subset_size) + "_" + sarcasm_file)
-    df_new = load_file_sarcasm(root_sarcasm_data_dir + "subset_" + str(subset_size) + "_" + sarcasm_file)
+#    if subset_size is not None:
+#        df=df.sample(n=subset_size)
+#    df.to_csv(root_sarcasm_data_dir + "subset_" + str(subset_size) + "_" + sarcasm_file)
+#    df_new = load_file_sarcasm(root_sarcasm_data_dir + "subset_" + str(subset_size) + "_" + sarcasm_file)
 
-    preprocess_text(df_new, filename, remove_stopwords=False)
+    preprocess_text(df, filename, remove_stopwords=False)
     df_new,_ = load_preprocessed_file(
         root_sarcasm_data_dir +"with_stopwords_" + filename)
     df_new_tr = truncate_document(df_new, max_length=300,updated_file=root_sarcasm_data_dir + "max_len_" + str(300) + "_" + filename)
@@ -265,9 +320,25 @@ def helper(subset_size=10000):
     remove_stopwords(df_train, "max_len_" + str(300) + "_" + "train" + "nostopwords")
     remove_stopwords(df_validate, "max_len_" + str(300) + "_" + "val" + "nostopwords")
     remove_stopwords(df_test, "max_len_" + str(300) + "_" + "test" + "nostopwords")
+    
+    
+    
+def new_pipeline(subset_size=10000, truncate_length=None):
+    prepare_for_yelp(is_yelp=True)
+    df = load_data(root_sarcasm_data_dir, subset_size=subset_size)
+    df = preprocess_text_new(df, truncate_length)
+    split_before_stopwords("sample_review_trunc.csv", test_size=0.2, val_size=0.1)
+    print "GENERATING FINAL FILES...."
+    print "test files..."
+    remove_stopwords_function(df,test_file)
+    print "train files..."
+    remove_stopwords_function(df, train_file)
+    print "validate files...."
+    remove_stopwords_function(df, validate_file)
+    
 
 def main():
-    helper(subset_size=1000)
+    new_pipeline(subset_size=10000, truncate_length=10)
     
 if __name__ == '__main__':
     main()
