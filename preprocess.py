@@ -362,7 +362,7 @@ def new_pipeline(subset_size=10000, truncate_length=None):
     
 
 def main():
-    new_pipeline(subset_size=1000, truncate_length=10)
+    new_pipeline(subset_size=350000, truncate_length=300)
     
 if __name__ == '__main__':
     main()
