@@ -100,7 +100,7 @@ def ensure_compatible_params(loaded_params, input_params):
         if key not in loaded_params:
             loaded_params[key]=input_params[key]
     # update the values of the following keys
-    keys_to_update = {"eval_weights_ckpt", "eval_x_data", "eval_y_data", "eval_res_folder", "verbose"}
+    keys_to_update = {"eval_weights_ckpt", "eval_x_data", "eval_y_data", "eval_res_folder", "attn_sample_size", "verbose"}
     for key in keys:
         if key in keys_to_update and loaded_params[key] != input_params[key]:
             print("# Updating hparams.%s: %s -> %s" %
