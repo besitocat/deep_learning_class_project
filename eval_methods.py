@@ -2,12 +2,9 @@ import model
 import utils
 from keras import backend as K
 import numpy as np
-import matplotlib
-matplotlib.rcParams['font.sans-serif'] = 'SimHei'
-matplotlib.rcParams['font.serif'] = 'SimHei'
-matplotlib.rcParams['font.family'] = "sans-serif"
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+import os
+import cPickle
+
 
 def get_attention_weights(model, data):
     inp = model.model.input  # input placeholder
@@ -15,30 +12,6 @@ def get_attention_weights(model, data):
     # Testing
     attention_weights = functor([data, 1.])
     return attention_weights[0]
-
-
-def plot_attention_weights(x_data,  attn_weights, vocab, out_folder, ids, pad_idx=0):
-    for i,sample in enumerate(x_data):
-        sample = sample.tolist()
-        weights = attn_weights[i]
-        pad_start = len(sample)
-        if pad_idx in sample:
-            pad_start = sample.index(pad_idx)
-
-        sample = sample[:pad_start]
-        for j, idx in enumerate(sample):
-            sample[j] = vocab[idx]
-        weights = weights[:pad_start]
-        fig = plt.figure(figsize=(15, 15))
-        plt.imshow(
-            X=np.reshape(weights,(1,weights.shape[0])),
-            interpolation="nearest",
-            cmap=plt.cm.Blues)
-        plt.title("")
-        plt.xticks(np.arange(len(sample)), sample, rotation=45)
-        plt.yticks(np.arange(1), ["input"])
-        plt.savefig(out_folder + "/attention" + str(ids[i]) + ".png")
-        plt.close()
 
 
 def evaluate_rnn(params):
@@ -58,15 +31,18 @@ def evaluate_rnn(params):
     #     metrics_names, scores = rnn_model.evaluate(x_data, y_data, batch_size=params["batch_size"], verbose=params["verbose"])
     #     loss = scores[0]
     #     print("Evaluation loss: %.3f"%loss)
+    sample_idxs = np.random.randint(x_data.shape[0], size=10)
+    x_data_sample = x_data[sample_idxs, :]
+    cPickle.dump(sample_idxs, open(os.path.join(params["eval_res_folder"], "sample_idxs.pickle"),"wb"))
     if params["attention"]:
-        sample_idxs = np.random.randint(x_data.shape[0], size=10)
-        x_data_sample = x_data[sample_idxs, :]
         attention_weights=get_attention_weights(rnn_model, x_data_sample)
         print("Attention weights shape: ",attention_weights.shape)
-        import cPickle
+        cPickle.dump(attention_weights, open(os.path.join(params["eval_res_folder"],"attn_weights.pickle"),"wb"))
         vocab = cPickle.load(open(params["vocab_file"]))
-        inverse_vocab = {value:key for key,value in vocab.items()}
-        plot_attention_weights(x_data_sample,  attention_weights, inverse_vocab,  params["eval_res_folder"],ids=sample_idxs)
+        if params["plot_attn"]:
+            inverse_vocab = {value:key for key,value in vocab.items()}
+            utils.plot_attention_weights(x_data_sample,  attention_weights, inverse_vocab,  params["eval_res_folder"],ids=sample_idxs)
+
     predictions = rnn_model.predict(x_data, batch_size=params["batch_size"], verbose=params["verbose"])
     utils.save_predictions(predictions, params["eval_res_folder"], rnn_model.model_name+"_predictions.txt")
 

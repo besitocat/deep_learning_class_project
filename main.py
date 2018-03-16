@@ -46,6 +46,7 @@ def add_arguments(parser):
     parser.add_argument("--eval_x_data", type=str, default=None, help="Input evaluation path.")
     parser.add_argument("--eval_y_data", type=str, default=None, help="Output evaluation path.")
     parser.add_argument("--eval_res_folder", type=str, default=None, help="Output folder to save evaluation results.")
+    parser.add_argument("--plot_attn", type="bool", default=False, help="Whether to plot attention weights.")
 
 
     # Training

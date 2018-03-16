@@ -4,6 +4,36 @@ import numpy as np
 from keras.optimizers import Adagrad
 import os
 import cPickle
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = 'SimHei'
+matplotlib.rcParams['font.serif'] = 'SimHei'
+matplotlib.rcParams['font.family'] = "sans-serif"
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+
+def plot_attention_weights(x_data,  attn_weights, vocab, out_folder, ids, savefilename, pad_idx=0):
+    for i,sample in enumerate(x_data):
+        sample = sample.tolist()
+        weights = attn_weights[i]
+        pad_start = len(sample)
+        if pad_idx in sample:
+            pad_start = sample.index(pad_idx)
+
+        sample = sample[:pad_start]
+        for j, idx in enumerate(sample):
+            sample[j] = vocab[idx]
+        weights = weights[:pad_start]
+        fig = plt.figure(figsize=(15, 15))
+        plt.imshow(
+            X=np.reshape(weights,(1,weights.shape[0])),
+            interpolation="nearest",
+            cmap=plt.cm.Blues)
+        plt.title("")
+        plt.xticks(np.arange(len(sample)), sample, rotation=45)
+        plt.yticks(np.arange(1), ["input"])
+        plt.savefig(os.path.join(out_folder, savefilename + str(ids[i]) + ".png"))
+        plt.close()
 
 
 def save_predictions(predictions, out_folder, filename="predictions.txt"):
