@@ -65,7 +65,7 @@ def evaluate_rnn(params):
         import cPickle
         vocab = cPickle.load(open(params["vocab_file"]))
         inverse_vocab = {value:key for key,value in vocab.items()}
-        plot_attention_weights(x_data,  attention_weights, inverse_vocab, params["eval_res_folder"], sample_size=10)
+        plot_attention_weights(x_data[1:5,:],  attention_weights, inverse_vocab, params["eval_res_folder"], sample_size=10)
     predictions = rnn_model.predict(x_data, batch_size=params["batch_size"], verbose=params["verbose"])
     utils.save_predictions(predictions, params["eval_res_folder"], rnn_model.model_name+"_predictions.txt")
 
