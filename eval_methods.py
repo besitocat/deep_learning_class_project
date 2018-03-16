@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 def get_attention_weights(model, data):
     inp = model.model.input  # input placeholder
-    functor = K.function([inp] + [K.learning_phase()], model.attention_scores)
+    functor = K.function([inp] + [K.learning_phase()], [model.attention_scores])
     # Testing
     attention_weights = functor([data, 1.])
     return attention_weights

@@ -67,7 +67,7 @@ def process_params(params):
     params["dropouts"] = [float(token) for token in params["dropouts"].split(",")]
     params["embs_matrix"] = None
     import cPickle
-    if params["embs_matrix_file"]:
+    if sorted(params["embs_matrix_file"]):
         embs_matrix = cPickle.load(open(params["embs_matrix_file"]))
         params["embs_matrix"]=embs_matrix
     else:params["embs_matrix"]=None
