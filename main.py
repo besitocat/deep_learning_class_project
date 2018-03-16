@@ -123,7 +123,7 @@ def run_main(params):
         save_params(params)
     print("Parameters: ")
     for key in params.keys():
-        print key+" = "+params[key]
+        print str(key)+" = "+str(params[key])
     model_type=params["model_type"]
 
     if params["eval_weights_ckpt"] is not None:
