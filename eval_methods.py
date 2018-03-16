@@ -14,17 +14,16 @@ def get_attention_weights(model, data):
     functor = K.function([inp] + [K.learning_phase()], [model.attention_scores])
     # Testing
     attention_weights = functor([data, 1.])
-    return attention_weights
+    return attention_weights[0]
 
 
-def plot_attention_weights(x_data,  attn_weights, vocab, out_folder, sample_size=10, pad_idx=0):
-    sample_idxs = np.random.randint(x_data.shape[0], size=sample_size)
-    x_data_sample = x_data[sample_idxs,:]
-    attn_weights_sample = attn_weights[sample_idxs, :]
-    for i,sample in enumerate(x_data_sample):
+def plot_attention_weights(x_data,  attn_weights, vocab, out_folder, ids, pad_idx=0):
+    for i,sample in enumerate(x_data):
         sample = sample.tolist()
-        weights = attn_weights_sample[i]
-        pad_start = sample.index(pad_idx)
+        weights = attn_weights[i]
+        pad_start = len(sample)
+        if pad_idx in sample:
+            pad_start = sample.index(pad_idx)
 
         sample = sample[:pad_start]
         for j, idx in enumerate(sample):
@@ -38,7 +37,7 @@ def plot_attention_weights(x_data,  attn_weights, vocab, out_folder, sample_size
         plt.title("")
         plt.xticks(np.arange(len(sample)), sample, rotation=45)
         plt.yticks(np.arange(1), ["input"])
-        plt.savefig(out_folder + "/attention" + str(sample_idxs[i]) + ".png")
+        plt.savefig(out_folder + "/attention" + str(ids[i]) + ".png")
         plt.close()
 
 
@@ -60,12 +59,14 @@ def evaluate_rnn(params):
     #     loss = scores[0]
     #     print("Evaluation loss: %.3f"%loss)
     if params["attention"]:
-        attention_weights=get_attention_weights(rnn_model, x_data)
+        sample_idxs = np.random.randint(x_data.shape[0], size=10)
+        x_data_sample = x_data[sample_idxs, :]
+        attention_weights=get_attention_weights(rnn_model, x_data_sample)
         print("Attention weights shape: ",attention_weights.shape)
         import cPickle
         vocab = cPickle.load(open(params["vocab_file"]))
         inverse_vocab = {value:key for key,value in vocab.items()}
-        plot_attention_weights(x_data[1:5,:],  attention_weights, inverse_vocab, params["eval_res_folder"], sample_size=10)
+        plot_attention_weights(x_data_sample,  attention_weights, inverse_vocab,  params["eval_res_folder"],ids=sample_idxs)
     predictions = rnn_model.predict(x_data, batch_size=params["batch_size"], verbose=params["verbose"])
     utils.save_predictions(predictions, params["eval_res_folder"], rnn_model.model_name+"_predictions.txt")
 
