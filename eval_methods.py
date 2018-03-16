@@ -31,7 +31,7 @@ def evaluate_rnn(params):
     #     metrics_names, scores = rnn_model.evaluate(x_data, y_data, batch_size=params["batch_size"], verbose=params["verbose"])
     #     loss = scores[0]
     #     print("Evaluation loss: %.3f"%loss)
-    sample_idxs = np.random.randint(x_data.shape[0], size=10)
+    sample_idxs = np.random.randint(x_data.shape[0], size=params["attn_sample_size"])
     x_data_sample = x_data[sample_idxs, :]
     cPickle.dump(sample_idxs, open(os.path.join(params["eval_res_folder"], "sample_idxs.pickle"),"wb"))
     if params["attention"]:
